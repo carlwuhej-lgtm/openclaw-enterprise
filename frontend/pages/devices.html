@@ -57,7 +57,7 @@
     <div class="nav-section">
       <div class="nav-section-title">系统工具</div>
       <ul class="nav-menu">
-        <li><a href="/pages/clinic" class="active"><span class="nav-icon">🏥</span> 急救室</a></li>
+        <li><a href="/pages/clinic"><span class="nav-icon">🏥</span> 急救室</a></li>
         <li><a href="/pages/notification" ><span class="nav-icon">🔔</span> 通知配置</a></li>
       </ul>
     </div>
@@ -74,18 +74,6 @@
       </div>
       
       <div class="topbar-actions">
-        <div class="search-box" id="search-box">
-          <span style="margin-right: 0.5rem;">🔍</span>
-          <input type="text" id="search-input" placeholder="搜索实例名称、主机名、IP..." oninput="handleSearch()">
-        </div>
-        <button class="icon-btn">🔔</button>
-        <div class="user-menu">
-          <div class="user-avatar">S</div>
-          <div class="user-info">
-            <span class="user-name">丝可乐</span>
-            <span class="user-role">安全管理员</span>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -598,7 +586,7 @@
 
   <script src="/js/auth.js"></script>
     <script>AUTH.requireAuth();</script>
-    <script src="/js/app.js?v=6"></script>
+    <script src="/js/app.js?v=126"></script>
   <script>
     // ==================== 状态 ====================
     let allDevices = [];
@@ -680,8 +668,8 @@
     }
 
     function applyFilters() {
-      const query = (document.getElementById('search-input').value || '').toLowerCase().trim();
-      const statusFilter = document.getElementById('status-filter').value;
+      const query = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
+      const statusFilter = document.getElementById('status-filter')?.value || '';
 
       filteredDevices = allDevices.filter(d => {
         const matchSearch = !query ||
@@ -802,7 +790,7 @@
     }
 
     function changePageSize() {
-      pageSize = parseInt(document.getElementById('page-size').value);
+      pageSize = parseInt(document.getElementById('page-size')?.value || '');
       currentPage = 1;
       renderTable();
       renderPagination();
@@ -883,7 +871,7 @@
 
     // ==================== 扫描局域网 ====================
     async function startScan() {
-      const subnet = document.getElementById('scan-subnet').value.trim();
+      const subnet = document.getElementById('scan-subnet')?.value || ''.trim();
       if (!subnet) { showToast('请输入子网地址', 'error'); return; }
 
       document.getElementById('scan-status').style.display = 'block';

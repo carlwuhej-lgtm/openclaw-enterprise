@@ -150,7 +150,7 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
     access_token = create_access_token(data=token_data)
     refresh_token = create_refresh_token(data=token_data)
     
-    # 检查是否使用默认密码
+    # 检查是否使用默认密码（仅提示，不强制修改）
     is_default_password = verify_password("admin", user.hashed_password)
     
     # 构建提示信息

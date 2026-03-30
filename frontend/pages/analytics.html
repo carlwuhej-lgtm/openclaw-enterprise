@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>分析中心 - OpenClaw Enterprise</title>
-  <link rel="stylesheet" href="/css/style.css?v=10">
+  <link rel="stylesheet" href="/css/style.css?v=11">
   <style>
     .analytics-tabs {
       display: flex;
@@ -91,7 +91,7 @@
     <div class="nav-section">
       <div class="nav-section-title">系统工具</div>
       <ul class="nav-menu">
-        <li><a href="/pages/clinic" class="active"><span class="nav-icon">🏥</span> 急救室</a></li>
+        <li><a href="/pages/clinic"><span class="nav-icon">🏥</span> 急救室</a></li>
         <li><a href="/pages/notification" ><span class="nav-icon">🔔</span> 通知配置</a></li>
       </ul>
     </div>
@@ -105,14 +105,6 @@
         <div class="breadcrumb-item">分析中心</div>
       </div>
       <div class="topbar-actions">
-        <button class="icon-btn">🔔</button>
-        <div class="user-menu">
-          <div class="user-avatar">S</div>
-          <div class="user-info">
-            <span class="user-name">丝可乐</span>
-            <span class="user-role">安全管理员</span>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -563,7 +555,7 @@
 
   <script src="/js/auth.js"></script>
   <script>AUTH.requireAuth();</script>
-  <script src="/js/app.js?v=5"></script>
+  <script src="/js/app.js?v=125"></script>
   <script>
     // ==================== Tab 切换 ====================
     function switchTab(tabName) {
@@ -600,8 +592,8 @@ var ANALYTICS_API = '';
     }
 
     async function trafficCheckURL() {
-      const url = document.getElementById('traffic-check-url').value;
-      const srcIp = document.getElementById('traffic-check-ip').value;
+      const url = document.getElementById('traffic-check-url')?.value || '';
+      const srcIp = document.getElementById('traffic-check-ip')?.value || '';
       if (!url) { alert('请输入 URL'); return; }
       const resultDiv = document.getElementById('traffic-check-result');
       try {
@@ -754,7 +746,7 @@ var ANALYTICS_API = '';
     }
 
     async function aiLoadProfile() {
-      const ip = document.getElementById('ai-profile-ip').value;
+      const ip = document.getElementById('ai-profile-ip')?.value || '';
       if (!ip) { alert('请输入实例 IP'); return; }
       try {
         const response = await authFetch('/api/ai/analyze/profile/' + ip);
@@ -769,9 +761,9 @@ var ANALYTICS_API = '';
     }
 
     async function aiConfigureAction() {
-      const anomalyType = document.getElementById('ai-anomaly-type').value;
-      const action = document.getElementById('ai-response-action').value;
-      const threshold = parseInt(document.getElementById('ai-confidence-threshold').value) / 100;
+      const anomalyType = document.getElementById('ai-anomaly-type')?.value || '';
+      const action = document.getElementById('ai-response-action')?.value || '';
+      const threshold = parseInt(document.getElementById('ai-confidence-threshold')?.value || '') / 100;
       try {
         const response = await authFetch('/api/ai/respond/configure', {
           method: 'POST',
@@ -797,7 +789,7 @@ var ANALYTICS_API = '';
 
     // ==================== 报表导出 JS ====================
     function expShowOptions() {
-      const type = document.getElementById('exp-type').value;
+      const type = document.getElementById('exp-type')?.value || '';
       document.getElementById('exp-date-range').style.display = 'none';
       document.getElementById('exp-report-period').style.display = 'none';
       if (type === 'audit') {
@@ -808,17 +800,17 @@ var ANALYTICS_API = '';
     }
 
     async function expExportData() {
-      const type = document.getElementById('exp-type').value;
-      const format = document.getElementById('exp-format').value;
-      const period = document.getElementById('exp-period-select').value;
+      const type = document.getElementById('exp-type')?.value || '';
+      const format = document.getElementById('exp-format')?.value || '';
+      const period = document.getElementById('exp-period-select')?.value || '';
       let url = '';
       let filename = '';
       if (type === 'devices') {
         url = '/api/export/devices?format=' + format;
         filename = 'devices.' + format;
       } else if (type === 'audit') {
-        const startDate = document.getElementById('exp-start-date').value;
-        const endDate = document.getElementById('exp-end-date').value;
+        const startDate = document.getElementById('exp-start-date')?.value || '';
+        const endDate = document.getElementById('exp-end-date')?.value || '';
         url = '/api/export/audit-logs?format=' + format + '&start_date=' + startDate + '&end_date=' + endDate;
         filename = 'audit-logs.' + format;
       } else if (type === 'alerts') {

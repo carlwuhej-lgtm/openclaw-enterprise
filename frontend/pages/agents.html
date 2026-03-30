@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agent 管理 - OpenClaw Enterprise</title>
-  <link rel="stylesheet" href="/css/style.css?v=10">
-  <link rel="stylesheet" href="/css/responsive.css?v=10">
+  <link rel="stylesheet" href="/css/style.css?v=11">
+  <link rel="stylesheet" href="/css/responsive.css?v=11">
 </head>
 <body>
   <!-- 侧边栏 -->
@@ -57,7 +57,7 @@
     <div class="nav-section">
       <div class="nav-section-title">系统工具</div>
       <ul class="nav-menu">
-        <li><a href="/pages/clinic" class="active"><span class="nav-icon">🏥</span> 急救室</a></li>
+        <li><a href="/pages/clinic"><span class="nav-icon">🏥</span> 急救室</a></li>
         <li><a href="/pages/notification" ><span class="nav-icon">🔔</span> 通知配置</a></li>
       </ul>
     </div>
@@ -74,18 +74,6 @@
       </div>
       
       <div class="topbar-actions">
-        <div class="search-box">
-          <span style="margin-right: 0.5rem;">🔍</span>
-          <input type="text" id="search-input" placeholder="搜索 Agent 名称、ID、实例..." oninput="handleSearch()">
-        </div>
-        <button class="icon-btn">🔔</button>
-        <div class="user-menu">
-          <div class="user-avatar">S</div>
-          <div class="user-info">
-            <span class="user-name">丝可乐</span>
-            <span class="user-role">安全管理员</span>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -560,7 +548,7 @@
 
   <script src="/js/auth.js"></script>
     <script>AUTH.requireAuth();</script>
-    <script src="/js/app.js?v=4"></script>
+    <script src="/js/app.js?v=124"></script>
   <script>
     // ==================== 状态 ====================
     let allAgents = [];
@@ -630,8 +618,8 @@
     }
 
     function applyFilters() {
-      const query = (document.getElementById('search-input').value || '').toLowerCase().trim();
-      const statusFilter = document.getElementById('status-filter').value;
+      const query = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
+      const statusFilter = document.getElementById('status-filter')?.value || '';
 
       filteredAgents = allAgents.filter(a => {
         const device = allDevices.find(d => d.id === a.device_id);
@@ -747,7 +735,7 @@
     }
 
     function changePageSize() {
-      pageSize = parseInt(document.getElementById('page-size').value);
+      pageSize = parseInt(document.getElementById('page-size')?.value || '');
       currentPage = 1;
       renderTable();
       renderPagination();
@@ -897,7 +885,7 @@
     }
 
     async function startBatchImport() {
-      const deviceId = document.getElementById('batch-device-select').value;
+      const deviceId = document.getElementById('batch-device-select')?.value || '';
       if (!deviceId) { showToast('请先选择实例', 'error'); return; }
 
       document.getElementById('batch-status').style.display = 'block';

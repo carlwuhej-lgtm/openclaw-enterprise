@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>控制台 - OpenClaw Enterprise</title>
-  <link rel="stylesheet" href="/css/style.css?v=10">
-  <link rel="stylesheet" href="/css/responsive.css?v=10">
+  <link rel="stylesheet" href="/css/style.css?v=11">
+  <link rel="stylesheet" href="/css/responsive.css?v=11">
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
   <style>
     /* ── Dashboard-specific enhancements ── */
@@ -93,7 +93,6 @@
     .left-column > .card + .card { margin-top: 1rem; }
     .right-column > .card + .card { margin-top: 1rem; }
 
-    .realtime-clock {
       font-family: var(--font-mono); font-size: 0.72rem;
       color: var(--text-muted); letter-spacing: 0.04em;
     }
@@ -149,8 +148,9 @@
     <div class="nav-section">
       <div class="nav-section-title">系统工具</div>
       <ul class="nav-menu">
-        <li><a href="/pages/clinic" class="active"><span class="nav-icon">🏥</span> 急救室</a></li>
+        <li><a href="/pages/clinic"><span class="nav-icon">🏥</span> 急救室</a></li>
         <li><a href="/pages/notification"><span class="nav-icon">🔔</span> 通知配置</a></li>
+        <li><a href="/pages/change-password"><span class="nav-icon">🔑</span> 修改密码</a></li>
       </ul>
     </div>
   </aside>
@@ -164,7 +164,6 @@
         <div class="breadcrumb-item">控制台</div>
       </div>
       <div class="topbar-actions">
-        <span class="realtime-clock" id="realtimeClock">--:--:--</span>
         <div class="user-menu" id="userMenu" style="cursor: pointer;">
           <div class="user-avatar" id="userAvatar">?</div>
           <div class="user-info">
@@ -387,12 +386,8 @@
     document.addEventListener('click', () => { document.getElementById('userDropdown').style.display = 'none'; });
 
     // Clock
-    function updateClock() {
-      document.getElementById('realtimeClock').textContent =
         new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
-    setInterval(updateClock, 1000);
-    updateClock();
 
     // ==================== API Helper ====================
     async function api(path) {
@@ -605,11 +600,14 @@
       }
 
       // Agent stats
-      const agentsData = await api('/agents?page=1&page_size=1');
+      const agentsData = await api('/agents?page=1&page_size=100');
       if (agentsData) {
-        const totalAgents = agentsData.total || 0;
+        const agentsArray = Array.isArray(agentsData) ? agentsData : (agentsData.items || []);
+        const totalAgents = agentsData.total || agentsArray.length;
         document.getElementById('stat-agents').textContent = totalAgents;
-        document.getElementById('stat-agents-active').textContent = totalAgents + ' 活跃';
+        // 统计活跃的 Agent（status='running'）
+        const activeAgents = agentsArray.filter(a => a.status === 'running').length;
+        document.getElementById('stat-agents-active').textContent = activeAgents + ' 活跃';
       }
 
       // Alerts - for table and pie chart

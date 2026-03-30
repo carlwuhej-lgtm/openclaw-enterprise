@@ -108,12 +108,12 @@
     function hideAddTargetModal() { document.getElementById('add-target-modal').classList.remove('show'); document.getElementById('target-name').value = ''; document.getElementById('target-host').value = ''; }
     
     async function submitAddTarget() {
-      const name = document.getElementById('target-name').value.trim();
-      const host = document.getElementById('target-host').value.trim();
-      const port = document.getElementById('target-port').value;
-      const protocol = document.getElementById('target-protocol').value;
-      const facility = document.getElementById('target-facility').value;
-      const severity_min = document.getElementById('target-severity-min').value;
+      const name = document.getElementById('target-name')?.value || ''.trim();
+      const host = document.getElementById('target-host')?.value || ''.trim();
+      const port = document.getElementById('target-port')?.value || '';
+      const protocol = document.getElementById('target-protocol')?.value || '';
+      const facility = document.getElementById('target-facility')?.value || '';
+      const severity_min = document.getElementById('target-severity-min')?.value || '';
       
       if (!name || !host) { alert('⚠️ 请填写名称和目标地址'); return; }
       
@@ -133,9 +133,9 @@
     async function testTarget(id) { try { const r = await authFetch(API_BASE + '/api/syslog/forward-targets/' + id + '/test', { method: 'POST' }); const d = await r.json(); alert(d.success ? '✅ ' + d.message : '❌ ' + d.message); } catch(e) { alert('❌ ' + e.message); } }
 
     async function sendTestLog() {
-      const targetId = document.getElementById('test-target').value;
-      const severity = document.getElementById('test-severity').value;
-      const message = document.getElementById('test-message').value || '测试日志';
+      const targetId = document.getElementById('test-target')?.value || '';
+      const severity = document.getElementById('test-severity')?.value || '';
+      const message = document.getElementById('test-message')?.value || '' || '测试日志';
       
       if (!targetId) { alert('⚠️ 请选择转发目标'); return; }
       

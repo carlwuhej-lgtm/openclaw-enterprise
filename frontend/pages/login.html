@@ -547,8 +547,8 @@
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+            const username = document.getElementById('username')?.value || '';
+            const password = document.getElementById('password')?.value || '';
             const button = document.getElementById('loginButton');
             const errorDiv = document.getElementById('errorMessage');
             const errorText = document.getElementById('errorText');
@@ -601,8 +601,8 @@
         document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
+            const newPassword = document.getElementById('newPassword')?.value || '';
+            const confirmPassword = document.getElementById('confirmPassword')?.value || '';
             const button = document.getElementById('cpButton');
             const errorDiv = document.getElementById('cpErrorMessage');
             const errorText = document.getElementById('cpErrorText');

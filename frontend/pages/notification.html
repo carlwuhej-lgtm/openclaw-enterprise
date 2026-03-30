@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>通知配置 - OpenClaw Enterprise</title>
-  <link rel="stylesheet" href="/css/style.css?v=10">
+  <link rel="stylesheet" href="/css/style.css?v=11">
   <style>
     .toast-msg {
       position: fixed; top: 1.5rem; right: 1.5rem; z-index: 2000;
@@ -76,7 +76,7 @@
     </div>
     <div class="nav-section">
       <div class="nav-section-title">系统工具</div>
-      <ul class="nav-menu"><li><a href="/pages/clinic" class="active"><span class="nav-icon">🏥</span> 急救室</a></li>
+      <ul class="nav-menu"><li><a href="/pages/clinic"><span class="nav-icon">🏥</span> 急救室</a></li>
         <li><a href="/pages/notification" class="active"><span class="nav-icon">🔔</span> 通知配置</a></li></ul>
     </div>
   </aside>
@@ -89,14 +89,6 @@
         <div class="breadcrumb-item">通知配置</div>
       </div>
       <div class="topbar-actions">
-        <button class="icon-btn">🔔</button>
-        <div class="user-menu">
-          <div class="user-avatar">S</div>
-          <div class="user-info">
-            <span class="user-name">丝可乐</span>
-            <span class="user-role">安全管理员</span>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -292,7 +284,7 @@
 
   <script src="/js/auth.js"></script>
   <script>AUTH.requireAuth();</script>
-  <script src="/js/app.js?v=4"></script>
+  <script src="/js/app.js?v=124"></script>
   <script>
     const NF_API = window.location.origin + '/api/notification';
 
@@ -309,7 +301,7 @@
 
     // ==================== Channel config toggle ====================
     function showChannelConfig() {
-      const channel = document.getElementById('channel-type').value;
+      const channel = document.getElementById('channel-type')?.value || '';
       document.getElementById('channel-config').style.display = channel ? 'block' : 'none';
       ['feishu', 'email', 'sms', 'webhook'].forEach(type => {
         document.getElementById(`${type}-config`).style.display = 'none';
@@ -321,38 +313,38 @@
 
     // ==================== Collect config from form ====================
     function collectConfig() {
-      const channel = document.getElementById('channel-type').value;
+      const channel = document.getElementById('channel-type')?.value || '';
       if (!channel) return null;
 
       let config = {};
       if (channel === 'feishu') {
         config = {
-          webhook_url: document.getElementById('feishu-webhook').value,
-          secret: document.getElementById('feishu-secret').value
+          webhook_url: document.getElementById('feishu-webhook')?.value || '',
+          secret: document.getElementById('feishu-secret')?.value || ''
         };
         if (!config.webhook_url) { showToast('请填写飞书 Webhook URL', 'error'); return null; }
       } else if (channel === 'email') {
         config = {
-          smtp_server: document.getElementById('email-smtp').value,
-          smtp_port: parseInt(document.getElementById('email-port').value) || 465,
-          username: document.getElementById('email-from').value,
-          password: document.getElementById('email-password').value,
-          from_email: document.getElementById('email-from').value,
-          test_email: document.getElementById('email-test').value
+          smtp_server: document.getElementById('email-smtp')?.value || '',
+          smtp_port: parseInt(document.getElementById('email-port')?.value || '') || 465,
+          username: document.getElementById('email-from')?.value || '',
+          password: document.getElementById('email-password')?.value || '',
+          from_email: document.getElementById('email-from')?.value || '',
+          test_email: document.getElementById('email-test')?.value || ''
         };
         if (!config.smtp_server) { showToast('请填写 SMTP 服务器', 'error'); return null; }
       } else if (channel === 'sms') {
         config = {
-          provider: document.getElementById('sms-provider').value,
-          access_key: document.getElementById('sms-access-key').value,
-          secret_key: document.getElementById('sms-secret-key').value,
-          sign_name: document.getElementById('sms-sign').value,
-          template_code: document.getElementById('sms-template').value
+          provider: document.getElementById('sms-provider')?.value || '',
+          access_key: document.getElementById('sms-access-key')?.value || '',
+          secret_key: document.getElementById('sms-secret-key')?.value || '',
+          sign_name: document.getElementById('sms-sign')?.value || '',
+          template_code: document.getElementById('sms-template')?.value || ''
         };
       } else if (channel === 'webhook') {
         config = {
-          url: document.getElementById('webhook-url').value,
-          method: document.getElementById('webhook-method').value
+          url: document.getElementById('webhook-url')?.value || '',
+          method: document.getElementById('webhook-method')?.value || ''
         };
         if (!config.url) { showToast('请填写 Webhook URL', 'error'); return null; }
       }
