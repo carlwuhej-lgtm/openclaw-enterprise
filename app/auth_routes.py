@@ -155,7 +155,7 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
     
     # 构建提示信息
     if is_default_password:
-        message = "登录成功，请修改默认密码"
+        message = "登录成功（首次登录建议修改默认密码）"
     else:
         message = "登录成功"
     
@@ -173,7 +173,7 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
             "tenant_id": user.tenant_id
         },
         message=message,
-        must_change_password=is_default_password
+        must_change_password=False  # 不强制修改密码
     )
 
 
