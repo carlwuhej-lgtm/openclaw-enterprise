@@ -85,7 +85,7 @@ docker run -d \
 
 ### 访问控制台
 - 地址：http://localhost:8003
-- 默认账号：`admin` / `admin123`（首次登录请修改密码）
+- 默认账号：`admin` / `admin（请修改密码）`（首次登录请修改密码）
 
 ---
 
