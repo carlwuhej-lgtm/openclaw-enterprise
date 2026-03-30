@@ -164,17 +164,7 @@
         <div class="breadcrumb-item">控制台</div>
       </div>
       <div class="topbar-actions">
-        <div class="user-menu" id="userMenu" style="cursor: pointer;">
-          <div class="user-avatar" id="userAvatar">?</div>
-          <div class="user-info">
-            <span class="user-name" id="userName">加载中...</span>
-            <span class="user-role" id="userRole">-</span>
-          </div>
-          <div class="dropdown-menu" id="userDropdown" style="display:none;position:absolute;top:100%;right:0;background:var(--dark-card);border:1px solid var(--dark-border);border-radius:8px;padding:6px 0;min-width:120px;margin-top:8px;z-index:100;">
-            <a href="#" onclick="logout()" style="display:block;padding:8px 16px;color:var(--text-secondary);text-decoration:none;font-size:0.82rem;transition:color 0.2s;">退出登录</a>
-          </div>
         </div>
-      </div>
     </div>
 
     <div class="content">
@@ -363,32 +353,7 @@
       localStorage.removeItem('user_info');
       window.location.href = './login.html';
     }
-    async function loadUserInfo() {
-      const userInfo = localStorage.getItem('user_info');
-      if (userInfo) {
-        const user = JSON.parse(userInfo);
-        document.getElementById('userName').textContent = user.real_name || user.username;
-        document.getElementById('userRole').textContent = getRoleName(user.role);
-        document.getElementById('userAvatar').textContent = (user.real_name || user.username).charAt(0).toUpperCase();
-      }
-    }
-    function getRoleName(role) {
-      const map = { 'admin': '管理员', 'manager': '经理', 'user': '用户', 'viewer': '访客' };
-      return map[role] || role;
-    }
-
-    // User dropdown
-    document.getElementById('userMenu').addEventListener('click', (e) => {
-      e.stopPropagation();
-      const d = document.getElementById('userDropdown');
-      d.style.display = d.style.display === 'none' ? 'block' : 'none';
-    });
-    document.addEventListener('click', () => { document.getElementById('userDropdown').style.display = 'none'; });
-
-    // Clock
-        new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    }
-
+    
     // ==================== API Helper ====================
     async function api(path) {
       try {
@@ -646,11 +611,11 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       if (!checkAuth()) return;
-      loadUserInfo();
+      
       load();
-    });
 
-    setInterval(load, 30000);
+      setInterval(load, 30000);
+    });
   </script>
   <script src="/js/auth.js"></script>
   <script>AUTH.requireAuth();</script>
