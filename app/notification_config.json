@@ -1,0 +1,13 @@
+{
+  "channels": {
+    "feishu": {
+      "channel": "feishu",
+      "name": "飞书通知",
+      "is_enabled": true,
+      "config": {
+        "webhook_url": "https://example.com/hook"
+      },
+      "updated_at": "2026-03-25T18:50:39.610909"
+    }
+  }
+}

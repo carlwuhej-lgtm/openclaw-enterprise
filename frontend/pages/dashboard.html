@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>控制台 - OpenClaw Enterprise</title>
+  <link rel="stylesheet" href="/css/style.css?v=10">
+  <link rel="stylesheet" href="/css/responsive.css?v=10">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+  <style>
+    /* ── Dashboard-specific enhancements ── */
+    .stat-card .stat-value {
+      background: linear-gradient(135deg, #fff 60%, var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-card.danger .stat-value {
+      background: linear-gradient(135deg, #fff 60%, var(--danger));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-card.success .stat-value {
+      background: linear-gradient(135deg, #fff 60%, var(--success));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Security status bar */
+    .security-bar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 16px;
+      background: rgba(0, 255, 136, 0.04);
+      border: 1px solid rgba(0, 255, 136, 0.1);
+      border-radius: var(--radius-md);
+      margin-bottom: 1.5rem; font-size: 0.78rem;
+    }
+    .security-bar .sec-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--success);
+      animation: breathe 2.5s ease-in-out infinite;
+    }
+    @keyframes breathe {
+      0%, 100% { opacity: 1; box-shadow: 0 0 4px rgba(0, 255, 136, 0.5); }
+      50% { opacity: 0.5; box-shadow: 0 0 12px rgba(0, 255, 136, 0.6), 0 0 24px rgba(0, 255, 136, 0.2); }
+    }
+    .security-bar .sec-label {
+      font-family: var(--font-mono); color: var(--success);
+      font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .security-bar .sec-meta {
+      margin-left: auto; font-family: var(--font-mono);
+      color: var(--text-muted); font-size: 0.68rem;
+    }
+
+    /* Quick actions grid */
+    .quick-actions { display: flex; flex-direction: column; gap: 6px; }
+    .quick-actions .btn { width: 100%; justify-content: flex-start; padding: 10px 14px; font-size: 0.82rem; }
+
+    /* Policy status items */
+    .policy-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0; border-bottom: 1px solid rgba(26, 35, 50, 0.5);
+    }
+    .policy-item:last-child { border-bottom: none; }
+    .policy-name { font-size: 0.82rem; color: var(--text-secondary); }
+    .policy-badge {
+      font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600;
+      padding: 3px 8px; border-radius: 4px; letter-spacing: 0.03em;
+    }
+    .policy-badge.enabled {
+      background: rgba(0, 255, 136, 0.1); color: var(--success);
+      border: 1px solid rgba(0, 255, 136, 0.15);
+    }
+    .policy-badge.disabled {
+      background: rgba(61, 79, 99, 0.15); color: var(--text-muted);
+      border: 1px solid rgba(61, 79, 99, 0.15);
+    }
+
+    /* ECharts container */
+    .chart-container { width: 100%; min-height: 280px; }
+
+    /* Content grid - dashboard layout */
+    .content-grid {
+      grid-template-columns: 1fr minmax(280px, 360px);
+      gap: 1.25rem;
+    }
+    @media (min-width: 1440px) { .content-grid { grid-template-columns: 5fr 2fr; } }
+    @media (min-width: 1920px) { .content-grid { grid-template-columns: 3fr 1fr; } }
+    .left-column > .card + .card { margin-top: 1rem; }
+    .right-column > .card + .card { margin-top: 1rem; }
+
+    .realtime-clock {
+      font-family: var(--font-mono); font-size: 0.72rem;
+      color: var(--text-muted); letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-brand">
+        <div class="logo-icon">🐱</div>
+        <div class="logo-text">
+          <h1>OpenClaw</h1>
+          <p>Enterprise</p>
+        </div>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">总览</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/dashboard" class="active"><span class="nav-icon">📊</span> 控制台</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">资产管理</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/devices"><span class="nav-icon">💻</span> 实例管理</a></li>
+        <li><a href="/pages/agents"><span class="nav-icon">🤖</span> Agent 管理</a></li>
+        <li><a href="/pages/tenants"><span class="nav-icon">🏢</span> 租户管理</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">安全管控</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/policies"><span class="nav-icon">🛡️</span> 安全管控</a></li>
+        <li><a href="/pages/scanner"><span class="nav-icon">🔍</span> 网络扫描</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">监控审计</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/alerts"><span class="nav-icon">🚨</span> 告警中心</a></li>
+        <li><a href="/pages/audit"><span class="nav-icon">📋</span> 审计日志</a></li>
+        <li><a href="/pages/syslog"><span class="nav-icon">📜</span> 日志中心</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">分析报告</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/analytics"><span class="nav-icon">📊</span> 分析中心</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">系统工具</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/clinic" class="active"><span class="nav-icon">🏥</span> 急救室</a></li>
+        <li><a href="/pages/notification"><span class="nav-icon">🔔</span> 通知配置</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <div class="topbar">
+      <div class="breadcrumb">
+        <div class="breadcrumb-item"><span>🏠</span><span>首页</span></div>
+        <span class="breadcrumb-separator">/</span>
+        <div class="breadcrumb-item">控制台</div>
+      </div>
+      <div class="topbar-actions">
+        <span class="realtime-clock" id="realtimeClock">--:--:--</span>
+        <div class="user-menu" id="userMenu" style="cursor: pointer;">
+          <div class="user-avatar" id="userAvatar">?</div>
+          <div class="user-info">
+            <span class="user-name" id="userName">加载中...</span>
+            <span class="user-role" id="userRole">-</span>
+          </div>
+          <div class="dropdown-menu" id="userDropdown" style="display:none;position:absolute;top:100%;right:0;background:var(--dark-card);border:1px solid var(--dark-border);border-radius:8px;padding:6px 0;min-width:120px;margin-top:8px;z-index:100;">
+            <a href="#" onclick="logout()" style="display:block;padding:8px 16px;color:var(--text-secondary);text-decoration:none;font-size:0.82rem;transition:color 0.2s;">退出登录</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Header -->
+      <div class="page-header">
+        <h1 class="page-title">🛡️ 安全态势总览</h1>
+        <p class="page-subtitle">实时监控企业 AI Agent 安全状态与风险态势</p>
+      </div>
+
+      <!-- Security Status Bar -->
+      <div class="security-bar" id="securityBar">
+        <div class="sec-dot"></div>
+        <span class="sec-label">System Operational</span>
+        <span class="sec-meta" id="secMeta">上次更新: --:--:--</span>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid" id="stats-container">
+        <div class="stat-card">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-devices">-</div>
+              <div class="stat-label">实例总数</div>
+            </div>
+            <div class="stat-icon">💻</div>
+          </div>
+          <span class="stat-trend" id="stat-online">- 在线</span>
+        </div>
+        <div class="stat-card danger">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-alerts">-</div>
+              <div class="stat-label">严重告警</div>
+            </div>
+            <div class="stat-icon">🚨</div>
+          </div>
+          <span class="stat-trend">需要处理</span>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-audit">-</div>
+              <div class="stat-label">今日审计</div>
+            </div>
+            <div class="stat-icon">📋</div>
+          </div>
+          <span class="stat-trend">自动记录</span>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-agents">-</div>
+              <div class="stat-label">Agent 总数</div>
+            </div>
+            <div class="stat-icon">🤖</div>
+          </div>
+          <span class="stat-trend" id="stat-agents-active">- 活跃</span>
+        </div>
+      </div>
+
+      <!-- Full-width Trend Chart -->
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <div class="card-header">
+          <div class="card-title">📈 7 天审计趋势</div>
+          <div class="card-actions">
+            <span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted)">最近 7 天</span>
+          </div>
+        </div>
+        <div class="card-body" style="padding: 0.5rem 0.5rem 0;">
+          <div id="trendChart" class="chart-container" style="height: 260px;"></div>
+        </div>
+      </div>
+
+      <!-- Content Grid: Left + Right -->
+      <div class="content-grid">
+        <div class="left-column">
+          <!-- Recent Alerts -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🚨 最新告警</div>
+              <button class="btn btn-secondary btn-sm" onclick="location.href='/pages/alerts'">查看全部 →</button>
+            </div>
+            <div class="card-body" style="padding:0">
+              <table>
+                <thead><tr><th>级别</th><th>标题</th><th>状态</th><th>时间</th></tr></thead>
+                <tbody id="alert-table"><tr><td colspan="4" style="text-align:center;padding:1.5rem;color:var(--text-muted)">加载中...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Operation Type Bar Chart -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📊 操作类型分布</div>
+            </div>
+            <div class="card-body" style="padding: 0.5rem 0.5rem 0;">
+              <div id="opTypeChart" class="chart-container" style="height: 260px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="right-column">
+          <!-- Alert Level Pie Chart -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🎯 告警级别分布</div>
+            </div>
+            <div class="card-body" style="padding: 0;">
+              <div id="alertPieChart" class="chart-container" style="height: 260px;"></div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">⚡ 快捷操作</div></div>
+            <div class="card-body">
+              <div class="quick-actions">
+                <a href="/pages/devices" class="btn btn-primary">💻 实例管理</a>
+                <a href="/pages/agents" class="btn btn-primary">🤖 Agent 管理</a>
+                <a href="/pages/policies" class="btn btn-secondary">🛡️ 策略中心</a>
+                <a href="/pages/audit" class="btn btn-secondary">📋 审计日志</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- System Info -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🔧 系统信息</div>
+            </div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:0.78rem;color:var(--text-secondary)">平台版本</span>
+                  <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--primary)">v1.0.0</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:0.78rem;color:var(--text-secondary)">刷新间隔</span>
+                  <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted)">30s</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:0.78rem;color:var(--text-secondary)">连接状态</span>
+                  <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--success)">● 正常</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API = window.location.origin + '/api';
+
+    // ==================== ECharts 主题 ====================
+    const chartTheme = {
+      backgroundColor: 'transparent',
+      textStyle: { color: '#94a3b8' },
+      title: { textStyle: { color: '#f1f5f9' } },
+      legend: { textStyle: { color: '#94a3b8' } },
+      xAxis: {
+        axisLine: { lineStyle: { color: '#1e293b' } },
+        axisLabel: { color: '#64748b' },
+        splitLine: { lineStyle: { color: '#1e293b' } }
+      },
+      yAxis: {
+        axisLine: { lineStyle: { color: '#1e293b' } },
+        axisLabel: { color: '#64748b' },
+        splitLine: { lineStyle: { color: '#1e293b' } }
+      }
+    };
+
+    let trendChartInstance = null;
+    let alertPieInstance = null;
+    let opTypeChartInstance = null;
+
+    // ==================== Auth ====================
+    function getToken() { return localStorage.getItem('access_token'); }
+    function checkAuth() {
+      if (!getToken()) { window.location.href = './login.html'; return false; }
+      return true;
+    }
+    function logout() {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user_info');
+      window.location.href = './login.html';
+    }
+    async function loadUserInfo() {
+      const userInfo = localStorage.getItem('user_info');
+      if (userInfo) {
+        const user = JSON.parse(userInfo);
+        document.getElementById('userName').textContent = user.real_name || user.username;
+        document.getElementById('userRole').textContent = getRoleName(user.role);
+        document.getElementById('userAvatar').textContent = (user.real_name || user.username).charAt(0).toUpperCase();
+      }
+    }
+    function getRoleName(role) {
+      const map = { 'admin': '管理员', 'manager': '经理', 'user': '用户', 'viewer': '访客' };
+      return map[role] || role;
+    }
+
+    // User dropdown
+    document.getElementById('userMenu').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const d = document.getElementById('userDropdown');
+      d.style.display = d.style.display === 'none' ? 'block' : 'none';
+    });
+    document.addEventListener('click', () => { document.getElementById('userDropdown').style.display = 'none'; });
+
+    // Clock
+    function updateClock() {
+      document.getElementById('realtimeClock').textContent =
+        new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ==================== API Helper ====================
+    async function api(path) {
+      try {
+        const token = getToken();
+        const headers = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const r = await fetch(API + path, { headers });
+        if (r.status === 401) { logout(); return null; }
+        if (!r.ok) return null;
+        const d = await r.json();
+        return d.items || d;
+      } catch(e) { return null; }
+    }
+
+    function levelBadge(level) {
+      const m = { critical: '🔴', high: '🟠', medium: '🟡', low: '🔵' };
+      return `<span style="font-family:var(--font-mono);font-size:0.75rem">${m[level]||'⚪'} ${level}</span>`;
+    }
+    function timeAgo(ts) {
+      if (!ts) return '-';
+      return new Date(ts).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    // ==================== ECharts: Trend Line ====================
+    function renderTrendChart(data) {
+      const el = document.getElementById('trendChart');
+      if (!trendChartInstance) trendChartInstance = echarts.init(el);
+
+      const dates = data.map(d => d.date);
+      const counts = data.map(d => d.count);
+
+      trendChartInstance.setOption({
+        backgroundColor: 'transparent',
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(15, 23, 42, 0.95)',
+          borderColor: '#1e293b',
+          textStyle: { color: '#f1f5f9', fontSize: 12 },
+          formatter: '{b}<br/>审计事件: <b>{c}</b>'
+        },
+        grid: { left: 50, right: 20, top: 20, bottom: 35 },
+        xAxis: {
+          type: 'category',
+          data: dates,
+          axisLine: { lineStyle: { color: '#1e293b' } },
+          axisLabel: { color: '#64748b', fontSize: 11 },
+          axisTick: { show: false }
+        },
+        yAxis: {
+          type: 'value',
+          minInterval: 1,
+          axisLine: { show: false },
+          axisLabel: { color: '#64748b', fontSize: 11 },
+          splitLine: { lineStyle: { color: 'rgba(30, 41, 59, 0.6)', type: 'dashed' } }
+        },
+        series: [{
+          type: 'line',
+          data: counts,
+          smooth: true,
+          symbol: 'circle',
+          symbolSize: 6,
+          lineStyle: { color: '#00d4ff', width: 2.5 },
+          itemStyle: { color: '#00d4ff', borderWidth: 2, borderColor: '#0f172a' },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: 'rgba(0, 212, 255, 0.25)' },
+              { offset: 1, color: 'rgba(0, 212, 255, 0.02)' }
+            ])
+          }
+        }]
+      });
+    }
+
+    // ==================== ECharts: Alert Pie ====================
+    function renderAlertPie(alerts) {
+      const el = document.getElementById('alertPieChart');
+      if (!alertPieInstance) alertPieInstance = echarts.init(el);
+
+      // Count by level
+      const levelCounts = {};
+      (alerts || []).forEach(a => {
+        const lv = a.level || 'low';
+        levelCounts[lv] = (levelCounts[lv] || 0) + 1;
+      });
+
+      const colorMap = { critical: '#ef4444', high: '#f59e0b', medium: '#00d4ff', low: '#10b981' };
+      const labelMap = { critical: '严重', high: '高危', medium: '中危', low: '低危' };
+      const data = Object.entries(levelCounts).map(([k, v]) => ({
+        name: labelMap[k] || k,
+        value: v,
+        itemStyle: { color: colorMap[k] || '#64748b' }
+      }));
+
+      if (data.length === 0) {
+        data.push({ name: '暂无告警', value: 1, itemStyle: { color: '#1e293b' } });
+      }
+
+      alertPieInstance.setOption({
+        backgroundColor: 'transparent',
+        tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.95)',
+          borderColor: '#1e293b',
+          textStyle: { color: '#f1f5f9', fontSize: 12 }
+        },
+        legend: {
+          orient: 'horizontal',
+          bottom: 5,
+          textStyle: { color: '#94a3b8', fontSize: 11 },
+          itemWidth: 10, itemHeight: 10, itemGap: 12
+        },
+        series: [{
+          type: 'pie',
+          radius: ['40%', '65%'],
+          center: ['50%', '45%'],
+          label: {
+            show: true,
+            color: '#94a3b8',
+            fontSize: 11,
+            formatter: '{b}\n{c}'
+          },
+          labelLine: { lineStyle: { color: '#334155' } },
+          data: data,
+          emphasis: {
+            itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 212, 255, 0.3)' }
+          }
+        }]
+      });
+    }
+
+    // ==================== ECharts: Operation Type Bar ====================
+    function renderOpTypeChart(logs) {
+      const el = document.getElementById('opTypeChart');
+      if (!opTypeChartInstance) opTypeChartInstance = echarts.init(el);
+
+      const typeCounts = {};
+      (logs || []).forEach(l => {
+        const t = l.operation_type || 'unknown';
+        typeCounts[t] = (typeCounts[t] || 0) + 1;
+      });
+
+      const sorted = Object.entries(typeCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+      const names = sorted.map(s => s[0]);
+      const values = sorted.map(s => s[1]);
+
+      opTypeChartInstance.setOption({
+        backgroundColor: 'transparent',
+        tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.95)',
+          borderColor: '#1e293b',
+          textStyle: { color: '#f1f5f9', fontSize: 12 }
+        },
+        grid: { left: 100, right: 30, top: 10, bottom: 25 },
+        xAxis: {
+          type: 'value',
+          minInterval: 1,
+          axisLine: { show: false },
+          axisLabel: { color: '#64748b', fontSize: 11 },
+          splitLine: { lineStyle: { color: 'rgba(30, 41, 59, 0.6)', type: 'dashed' } }
+        },
+        yAxis: {
+          type: 'category',
+          data: names.reverse(),
+          axisLine: { lineStyle: { color: '#1e293b' } },
+          axisLabel: { color: '#94a3b8', fontSize: 11 },
+          axisTick: { show: false }
+        },
+        series: [{
+          type: 'bar',
+          data: values.reverse(),
+          barWidth: 16,
+          itemStyle: {
+            borderRadius: [0, 4, 4, 0],
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: 'rgba(0, 212, 255, 0.6)' },
+              { offset: 1, color: '#00d4ff' }
+            ])
+          },
+          emphasis: {
+            itemStyle: { color: '#00ff88' }
+          }
+        }]
+      });
+    }
+
+    // ==================== Data Loading ====================
+    async function load() {
+      // Stats
+      const stats = await api('/stats');
+      if (stats) {
+        document.getElementById('stat-devices').textContent = stats.total_devices;
+        document.getElementById('stat-online').textContent = stats.online_devices + ' 在线';
+        document.getElementById('stat-alerts').textContent = stats.critical_alerts;
+        document.getElementById('stat-audit').textContent = stats.today_audit_logs;
+        document.getElementById('secMeta').textContent = '上次更新: ' +
+          new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        // Trend chart
+        if (stats.weekly_trend && stats.weekly_trend.length > 0) {
+          renderTrendChart(stats.weekly_trend);
+        } else {
+          // Fallback: generate mock 7-day data
+          const fallback = [];
+          for (let i = 6; i >= 0; i--) {
+            const d = new Date(); d.setDate(d.getDate() - i);
+            fallback.push({ date: `${d.getMonth()+1}-${String(d.getDate()).padStart(2,'0')}`, count: 0 });
+          }
+          renderTrendChart(fallback);
+        }
+      }
+
+      // Agent stats
+      const agentsData = await api('/agents?page=1&page_size=1');
+      if (agentsData) {
+        const totalAgents = agentsData.total || 0;
+        document.getElementById('stat-agents').textContent = totalAgents;
+        document.getElementById('stat-agents-active').textContent = totalAgents + ' 活跃';
+      }
+
+      // Alerts - for table and pie chart
+      const alerts = await api('/alerts?page=1&page_size=50');
+      const atb = document.getElementById('alert-table');
+      if (alerts && alerts.length > 0) {
+        atb.innerHTML = alerts.slice(0, 8).map(a => `<tr>
+          <td>${levelBadge(a.level)}</td>
+          <td style="color:var(--text-primary);font-weight:500">${a.title}</td>
+          <td>${a.is_resolved
+            ? '<span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--success)">✅ 已解决</span>'
+            : '<span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--danger)">❌ 未解决</span>'}</td>
+          <td style="font-family:var(--font-mono);color:var(--text-muted);font-size:0.72rem">${timeAgo(a.created_at)}</td>
+        </tr>`).join('');
+        renderAlertPie(alerts);
+      } else {
+        atb.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:1.5rem;color:var(--text-muted);font-size:0.82rem">暂无告警 🎉</td></tr>';
+        renderAlertPie([]);
+      }
+
+      // Audit logs - for op type chart
+      const logs = await api('/audit-logs?page=1&page_size=200');
+      if (logs && logs.length > 0) {
+        renderOpTypeChart(logs);
+      } else {
+        renderOpTypeChart([]);
+      }
+    }
+
+    // Resize handler
+    window.addEventListener('resize', () => {
+      if (trendChartInstance) trendChartInstance.resize();
+      if (alertPieInstance) alertPieInstance.resize();
+      if (opTypeChartInstance) opTypeChartInstance.resize();
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!checkAuth()) return;
+      loadUserInfo();
+      load();
+    });
+
+    setInterval(load, 30000);
+  </script>
+  <script src="/js/auth.js"></script>
+  <script>AUTH.requireAuth();</script>
+</body>
+</html>

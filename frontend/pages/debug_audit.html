@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>审计日志调试</title>
+  <style>
+    body { background: #1a1a2e; color: #eee; font-family: monospace; padding: 2rem; }
+    .success { color: #10b981; }
+    .error { color: #ef4444; }
+    pre { background: #0f0f1a; padding: 1rem; border-radius: 8px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>🔍 审计日志调试</h1>
+  <div id="output"></div>
+  <script>
+    const output = document.getElementById('output');
+    function log(msg, data) {
+      output.innerHTML += `<div>${msg}</div>`;
+      if (data) output.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    }
+
+    const token = localStorage.getItem('access_token');
+    log('📋 Token:', token ? token.substring(0, 50) + '...' : '❌ 无 Token');
+
+    if (!token) {
+      log('❌ 未登录，5 秒后跳转到登录页...');
+      setTimeout(() => window.location.href = '/pages/login.html', 5000);
+    } else {
+      log('🔄 请求 API...');
+      fetch('/api/audit-logs?page=1&page_size=5', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(r => {
+        log('✅ 响应状态:', r.status + ' ' + r.statusText);
+        return r.json();
+      })
+      .then(d => {
+        log('✅ 数据:', { total: d.total, items: d.items?.length || 0 });
+        log('📊 第一条数据:', d.items?.[0]);
+      })
+      .catch(e => {
+        log('❌ 错误:', e.message);
+      });
+    }
+  </script>
+</body>
+</html>

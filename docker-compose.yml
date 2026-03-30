@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:///./data/openclaw_enterprise.db
+      - SECRET_KEY=change-this-in-production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/api/stats"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL (生产环境使用，取消注释启用)
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=openclaw_enterprise
+      - POSTGRES_USER=openclaw_user
+      - POSTGRES_PASSWORD=your_secure_password
+    ports:
+      - "5432:5432"
+    profiles:
+      - production
+
+  # Redis (可选，用于缓存，取消注释启用)
+  # redis:
+  #   image: redis:7-alpine
+  #   ports:
+  #     - "6379:6379"
+
+volumes:
+  postgres_data:

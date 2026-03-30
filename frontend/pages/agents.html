@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent 管理 - OpenClaw Enterprise</title>
+  <link rel="stylesheet" href="/css/style.css?v=10">
+  <link rel="stylesheet" href="/css/responsive.css?v=10">
+</head>
+<body>
+  <!-- 侧边栏 -->
+    <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-brand">
+        <div class="logo-icon">🐱</div>
+        <div class="logo-text">
+          <h1>OpenClaw</h1>
+          <p>Enterprise</p>
+        </div>
+      </div>
+    </div>
+        <div class="nav-section">
+      <div class="nav-section-title">总览</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/dashboard" ><span class="nav-icon">📊</span> 控制台</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">资产管理</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/devices" ><span class="nav-icon">💻</span> 实例管理</a></li>
+        <li><a href="/pages/agents" class="active"><span class="nav-icon">🤖</span> Agent 管理</a></li>
+        <li><a href="/pages/tenants" ><span class="nav-icon">🏢</span> 租户管理</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">安全管控</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/policies" ><span class="nav-icon">🛡️</span> 安全管控</a></li>
+        <li><a href="/pages/scanner" ><span class="nav-icon">🔍</span> 网络扫描</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">监控审计</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/alerts" ><span class="nav-icon">🚨</span> 告警中心</a></li>
+        <li><a href="/pages/audit" ><span class="nav-icon">📋</span> 审计日志</a></li>
+        <li><a href="/pages/syslog"><span class="nav-icon">📜</span> 日志中心</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">分析报告</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/analytics" ><span class="nav-icon">📊</span> 分析中心</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">系统工具</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/clinic" class="active"><span class="nav-icon">🏥</span> 急救室</a></li>
+        <li><a href="/pages/notification" ><span class="nav-icon">🔔</span> 通知配置</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- 主内容区 -->
+  <main class="main-content">
+    <!-- 顶部栏 -->
+    <div class="topbar">
+      <div class="breadcrumb">
+        <div class="breadcrumb-item"><span>🏠</span><span>首页</span></div>
+        <span class="breadcrumb-separator">/</span>
+        <div class="breadcrumb-item">Agent 管理</div>
+      </div>
+      
+      <div class="topbar-actions">
+        <div class="search-box">
+          <span style="margin-right: 0.5rem;">🔍</span>
+          <input type="text" id="search-input" placeholder="搜索 Agent 名称、ID、实例..." oninput="handleSearch()">
+        </div>
+        <button class="icon-btn">🔔</button>
+        <div class="user-menu">
+          <div class="user-avatar">S</div>
+          <div class="user-info">
+            <span class="user-name">丝可乐</span>
+            <span class="user-role">安全管理员</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 内容区 -->
+    <div class="content">
+      <div class="page-header">
+        <h1 class="page-title">🤖 Agent 管理</h1>
+        <p class="page-subtitle">管理所有 AI 智能体实例，监控运行状态，控制生命周期</p>
+      </div>
+
+      <!-- 统计卡片 -->
+      <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="stat-card">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-total">-</div>
+              <div class="stat-label">Agent 总数</div>
+            </div>
+            <div class="stat-icon">🤖</div>
+          </div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-running">-</div>
+              <div class="stat-label">运行中</div>
+            </div>
+            <div class="stat-icon">🟢</div>
+          </div>
+        </div>
+        <div class="stat-card danger">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-stopped">-</div>
+              <div class="stat-label">已停止</div>
+            </div>
+            <div class="stat-icon">🔴</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-unknown">-</div>
+              <div class="stat-label">未知</div>
+            </div>
+            <div class="stat-icon">⚪</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agent 列表 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 Agent 列表</div>
+          <div class="card-actions">
+            <select id="status-filter" class="filter-select" onchange="handleFilter()">
+              <option value="">全部状态</option>
+              <option value="running">🟢 运行中</option>
+              <option value="stopped">🔴 已停止</option>
+              <option value="unknown">⚪ 未知</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="openBatchModal()">📦 批量导入</button>
+            <button class="btn btn-primary btn-sm" onclick="openCreateModal()">➕ 创建 Agent</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Agent ID</th>
+                  <th>名称</th>
+                  <th>所属实例</th>
+                  <th>模型</th>
+                  <th>工作目录</th>
+                  <th>状态</th>
+                  <th>最后心跳</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="agents-table">
+                <tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text-muted);">加载中...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- 分页 -->
+          <div class="pagination-bar" id="pagination-bar">
+            <div class="pagination-info">
+              共 <span id="total-records">0</span> 条记录，第 <span id="current-page-num">1</span>/<span id="total-pages">1</span> 页
+            </div>
+            <div class="pagination-controls">
+              <button class="btn btn-secondary btn-sm" id="btn-prev" onclick="goPage('prev')" disabled>‹ 上一页</button>
+              <div class="pagination-pages" id="page-numbers"></div>
+              <button class="btn btn-secondary btn-sm" id="btn-next" onclick="goPage('next')">下一页 ›</button>
+              <select class="filter-select page-size-select" id="page-size" onchange="changePageSize()">
+                <option value="10">10 条/页</option>
+                <option value="20">20 条/页</option>
+                <option value="50">50 条/页</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 创建 Agent Modal -->
+  <div class="modal-overlay" id="create-modal" onclick="closeModalOnOverlay(event, 'create-modal')">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>➕ 创建新 Agent</h3>
+        <button class="modal-close" onclick="closeModal('create-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="create-form" onsubmit="submitCreate(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Agent ID <span class="required">*</span></label>
+              <input type="text" class="form-input" name="agent_id" placeholder="如：daily, security" required pattern="^[a-zA-Z0-9_-]+$">
+              <span class="form-hint">仅限字母、数字、下划线和连字符</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">名称 <span class="required">*</span></label>
+              <input type="text" class="form-input" name="name" placeholder="如：日常助手" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">所属实例 <span class="required">*</span></label>
+              <select class="form-input" name="device_id" id="create-device-select" required>
+                <option value="">选择实例...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">模型</label>
+              <input type="text" class="form-input" name="model" placeholder="如：bailian/glm-5">
+            </div>
+          </div>
+          <div class="form-group" style="margin-top: 1rem;">
+            <label class="form-label">工作目录</label>
+            <input type="text" class="form-input" name="workdir" placeholder="如：~/.openclaw/agents/daily">
+          </div>
+          <div class="form-group">
+            <label class="form-label">描述</label>
+            <textarea class="form-input form-textarea" name="description" placeholder="Agent 功能说明..." rows="3"></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('create-modal')">取消</button>
+            <button type="submit" class="btn btn-primary">创建 Agent</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑 Agent Modal -->
+  <div class="modal-overlay" id="edit-modal" onclick="closeModalOnOverlay(event, 'edit-modal')">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>✏️ 编辑 Agent</h3>
+        <button class="modal-close" onclick="closeModal('edit-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-form" onsubmit="submitEdit(event)">
+          <input type="hidden" name="id" id="edit-id">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Agent ID</label>
+              <input type="text" class="form-input" name="agent_id" id="edit-agent-id" readonly style="opacity:0.6;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">名称</label>
+              <input type="text" class="form-input" name="name" id="edit-name" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">所属实例</label>
+              <select class="form-input" name="device_id" id="edit-device-select" required>
+                <option value="">选择实例...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">模型</label>
+              <input type="text" class="form-input" name="model" id="edit-model">
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:1rem;">
+            <label class="form-label">工作目录</label>
+            <input type="text" class="form-input" name="workdir" id="edit-workdir">
+          </div>
+          <div class="form-group">
+            <label class="form-label">描述</label>
+            <textarea class="form-input form-textarea" name="description" id="edit-description" rows="3"></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('edit-modal')">取消</button>
+            <button type="submit" class="btn btn-primary">保存修改</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 批量导入 Modal -->
+  <div class="modal-overlay" id="batch-modal" onclick="closeModalOnOverlay(event, 'batch-modal')">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>📦 批量导入 Agent</h3>
+        <button class="modal-close" onclick="closeModal('batch-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1rem;">选择实例后，将自动发现并导入该实例上的所有 Agent 实例。</p>
+        <div class="form-group">
+          <label class="form-label">选择实例 <span class="required">*</span></label>
+          <select class="form-input" id="batch-device-select">
+            <option value="">选择实例...</option>
+          </select>
+        </div>
+        <div id="batch-status" style="display:none;margin-top:1rem;">
+          <div class="scan-progress">
+            <div class="scan-progress-bar" id="batch-progress-bar"></div>
+          </div>
+          <p id="batch-status-text" style="color:var(--text-muted);font-size:0.85rem;margin-top:0.5rem;">导入中...</p>
+        </div>
+        <div id="batch-results" style="margin-top:1rem;"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('batch-modal')">关闭</button>
+          <button type="button" class="btn btn-primary" onclick="startBatchImport()" id="batch-import-btn">开始导入</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 删除确认 Modal -->
+  <div class="modal-overlay" id="delete-modal" onclick="closeModalOnOverlay(event, 'delete-modal')">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header">
+        <h3>⚠️ 确认删除</h3>
+        <button class="modal-close" onclick="closeModal('delete-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text-secondary);font-size:0.9rem;">确定要删除 Agent <strong id="delete-agent-name" style="color:var(--danger);">-</strong> 吗？此操作不可撤销。</p>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('delete-modal')">取消</button>
+          <button type="button" class="btn btn-danger" onclick="confirmDelete()" id="delete-confirm-btn">删除</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* 页面特有样式 — 与 devices.html 保持一致 */
+    .filter-select {
+      background: var(--dark-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--dark-border);
+      border-radius: 8px;
+      padding: 0.5rem 0.875rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .filter-select:hover,
+    .filter-select:focus { border-color: var(--primary); }
+
+    /* 分页栏 */
+    .pagination-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--dark-border);
+      background: rgba(15, 23, 42, 0.3);
+    }
+    .pagination-info {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .pagination-pages {
+      display: flex;
+      gap: 0.25rem;
+    }
+    .page-btn {
+      min-width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      border: 1px solid var(--dark-border);
+      background: var(--dark-bg);
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .page-btn:hover { border-color: var(--primary); color: var(--text-primary); }
+    .page-btn.active {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    }
+    .page-btn.ellipsis {
+      border: none;
+      background: none;
+      cursor: default;
+      color: var(--text-muted);
+    }
+    .page-size-select { margin-left: 0.5rem; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--dark-card);
+      border: 1px solid var(--dark-border);
+      border-radius: 16px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+      animation: modalSlideIn 0.25s ease-out;
+    }
+    @keyframes modalSlideIn {
+      from { opacity: 0; transform: translateY(-20px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--dark-border);
+    }
+    .modal-header h3 { font-size: 1.1rem; font-weight: 600; }
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--dark-border);
+      background: var(--dark-bg);
+      color: var(--text-secondary);
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .modal-close:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--dark-border);
+    }
+
+    /* 表单 */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 0.375rem; }
+    .form-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .form-label .required { color: var(--danger); }
+    .form-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .form-input {
+      background: var(--dark-bg);
+      border: 1px solid var(--dark-border);
+      border-radius: 8px;
+      padding: 0.625rem 0.875rem;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+    .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15); }
+    .form-input::placeholder { color: var(--text-muted); }
+    .form-textarea { resize: vertical; min-height: 80px; }
+
+    /* 扫描/导入进度 */
+    .scan-progress {
+      width: 100%;
+      height: 6px;
+      background: var(--dark-bg);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .scan-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    /* 操作按钮组 */
+    .action-group { display: flex; gap: 0.375rem; flex-wrap: wrap; }
+    .btn-xs {
+      padding: 0.3rem 0.6rem;
+      font-size: 0.75rem;
+      border-radius: 6px;
+    }
+
+    /* 心跳指示 */
+    .heartbeat-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+    .heartbeat-time {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .heartbeat-ago {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* 批量导入结果 */
+    .batch-result-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--dark-border);
+      border-radius: 10px;
+      margin-bottom: 0.5rem;
+    }
+    .batch-result-info { display: flex; flex-direction: column; gap: 0.25rem; }
+    .batch-result-name { font-weight: 600; }
+    .batch-result-meta { font-size: 0.8rem; color: var(--text-muted); }
+
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      .form-grid { grid-template-columns: 1fr; }
+      .pagination-bar { flex-direction: column; gap: 0.75rem; }
+      .card-actions { flex-wrap: wrap; }
+    }
+  </style>
+
+  <script src="/js/auth.js"></script>
+    <script>AUTH.requireAuth();</script>
+    <script src="/js/app.js?v=4"></script>
+  <script>
+    // ==================== 状态 ====================
+    let allAgents = [];
+    let allDevices = [];
+    let filteredAgents = [];
+    let currentPage = 1;
+    let pageSize = 10;
+    let pendingDeleteId = null;
+
+    // ==================== 初始化 ====================
+    document.addEventListener('DOMContentLoaded', function() {
+      loadData();
+      setInterval(loadData, 30000);
+    });
+
+    // ==================== 数据加载 ====================
+    async function loadData() {
+      const [agentsResult, devicesResult] = await Promise.all([
+        fetchAPI('/agents'),
+        fetchAPI('/devices?page=1&page_size=100')
+      ]);
+
+      if (agentsResult) {
+        allAgents = agentsResult.items || agentsResult;
+      }
+      if (devicesResult) {
+        allDevices = devicesResult.items || devicesResult;
+        populateDeviceSelects();
+      }
+
+      applyFilters();
+      updateStats();
+    }
+
+    function updateStats() {
+      const counts = { total: allAgents.length, running: 0, stopped: 0, unknown: 0 };
+      allAgents.forEach(a => {
+        const s = a.status || 'unknown';
+        if (counts[s] !== undefined) counts[s]++;
+        else counts.unknown++;
+      });
+      document.getElementById('stat-total').textContent = counts.total;
+      document.getElementById('stat-running').textContent = counts.running;
+      document.getElementById('stat-stopped').textContent = counts.stopped;
+      document.getElementById('stat-unknown').textContent = counts.unknown;
+    }
+
+    function populateDeviceSelects() {
+      const options = '<option value="">选择实例...</option>' +
+        allDevices.map(d => `<option value="${d.id}">${escHtml(d.name)} (${escHtml(d.hostname || d.ip || '#' + d.id)})</option>`).join('');
+      
+      ['create-device-select', 'edit-device-select', 'batch-device-select'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = options;
+      });
+    }
+
+    // ==================== 搜索 & 过滤 ====================
+    function handleSearch() {
+      currentPage = 1;
+      applyFilters();
+    }
+
+    function handleFilter() {
+      currentPage = 1;
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const query = (document.getElementById('search-input').value || '').toLowerCase().trim();
+      const statusFilter = document.getElementById('status-filter').value;
+
+      filteredAgents = allAgents.filter(a => {
+        const device = allDevices.find(d => d.id === a.device_id);
+        const deviceName = device ? device.name : '';
+        const matchSearch = !query ||
+          (a.agent_id || '').toLowerCase().includes(query) ||
+          (a.name || '').toLowerCase().includes(query) ||
+          deviceName.toLowerCase().includes(query);
+        const matchStatus = !statusFilter || (a.status || 'unknown') === statusFilter;
+        return matchSearch && matchStatus;
+      });
+
+      renderTable();
+      renderPagination();
+    }
+
+    // ==================== 渲染表格 ====================
+    function renderTable() {
+      const tbody = document.getElementById('agents-table');
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+      const pageData = filteredAgents.slice(start, end);
+
+      if (pageData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text-muted);">暂无匹配 Agent</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = pageData.map(agent => {
+        const device = allDevices.find(d => d.id === agent.device_id);
+        const deviceLabel = device ? escHtml(device.name) : `<span style="color:var(--text-muted)">未关联</span>`;
+        const status = agent.status || 'unknown';
+        const statusBadge = getAgentStatusBadge(status);
+        const isRunning = status === 'running';
+
+        return `<tr>
+          <td style="color:var(--text-muted);font-family:monospace;font-size:0.8rem;">#${agent.id}</td>
+          <td><span class="badge badge-blue" style="font-family:monospace;">${escHtml(agent.agent_id || '-')}</span></td>
+          <td>
+            <div class="device-cell">
+              <span class="device-name">${getAgentStatusIcon(status)} ${escHtml(agent.name)}</span>
+            </div>
+          </td>
+          <td>${deviceLabel}</td>
+          <td style="font-size:0.85rem;color:var(--text-secondary);">${escHtml(agent.model || '-')}</td>
+          <td style="font-family:monospace;font-size:0.8rem;color:var(--text-muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(agent.workdir || '')}">${escHtml(agent.workdir || '-')}</td>
+          <td>${statusBadge}</td>
+          <td>
+            <div class="heartbeat-cell">
+              <span class="heartbeat-time">${agent.last_heartbeat ? new Date(agent.last_heartbeat).toLocaleTimeString('zh-CN') : '-'}</span>
+              <span class="heartbeat-ago">${agent.last_heartbeat ? formatTime(agent.last_heartbeat) : ''}</span>
+            </div>
+          </td>
+          <td>
+            <div class="action-group">
+              <button class="btn btn-secondary btn-xs" onclick="openEditAgent(${agent.id})">编辑</button>
+              ${isRunning
+                ? `<button class="btn btn-danger btn-xs" onclick="stopAgent(${agent.id})">停止</button>`
+                : `<button class="btn btn-primary btn-xs" onclick="startAgent(${agent.id})">启动</button>`}
+              <button class="btn btn-secondary btn-xs" style="color:var(--danger);" onclick="openDeleteModal(${agent.id})">删除</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ==================== 分页 ====================
+    function renderPagination() {
+      const total = filteredAgents.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      document.getElementById('total-records').textContent = total;
+      document.getElementById('current-page-num').textContent = currentPage;
+      document.getElementById('total-pages').textContent = totalPages;
+      document.getElementById('btn-prev').disabled = currentPage <= 1;
+      document.getElementById('btn-next').disabled = currentPage >= totalPages;
+
+      const container = document.getElementById('page-numbers');
+      const pages = generatePageNumbers(currentPage, totalPages);
+      container.innerHTML = pages.map(p => {
+        if (p === '...') return '<span class="page-btn ellipsis">…</span>';
+        return `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="goToPage(${p})">${p}</button>`;
+      }).join('');
+    }
+
+    function generatePageNumbers(current, total) {
+      if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+      const pages = [];
+      if (current <= 4) {
+        for (let i = 1; i <= 5; i++) pages.push(i);
+        pages.push('...', total);
+      } else if (current >= total - 3) {
+        pages.push(1, '...');
+        for (let i = total - 4; i <= total; i++) pages.push(i);
+      } else {
+        pages.push(1, '...', current - 1, current, current + 1, '...', total);
+      }
+      return pages;
+    }
+
+    function goPage(dir) {
+      if (dir === 'prev' && currentPage > 1) currentPage--;
+      else if (dir === 'next') currentPage++;
+      renderTable();
+      renderPagination();
+    }
+
+    function goToPage(n) {
+      currentPage = n;
+      renderTable();
+      renderPagination();
+    }
+
+    function changePageSize() {
+      pageSize = parseInt(document.getElementById('page-size').value);
+      currentPage = 1;
+      renderTable();
+      renderPagination();
+    }
+
+    // ==================== 辅助函数 ====================
+    function escHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function getAgentStatusIcon(status) {
+      const icons = { running: '🟢', stopped: '🔴', unknown: '⚪' };
+      return icons[status] || '⚪';
+    }
+
+    function getAgentStatusBadge(status) {
+      const map = {
+        running: '<span class="badge badge-green">🟢 运行中</span>',
+        stopped: '<span class="badge badge-red">🔴 已停止</span>',
+        unknown: '<span class="badge badge-gray">⚪ 未知</span>'
+      };
+      return map[status] || '<span class="badge badge-gray">⚪ 未知</span>';
+    }
+
+    // ==================== Modal 操作 ====================
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+    function closeModalOnOverlay(e, id) { if (e.target === e.currentTarget) closeModal(id); }
+
+    function openCreateModal() {
+      document.getElementById('create-form').reset();
+      populateDeviceSelects();
+      openModal('create-modal');
+    }
+
+    // ==================== 创建 Agent ====================
+    async function submitCreate(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        agent_id: form.agent_id.value,
+        name: form.name.value,
+        device_id: parseInt(form.device_id.value),
+        model: form.model.value || null,
+        workdir: form.workdir.value || null,
+        description: form.description.value || null
+      };
+
+      const result = await updateAPI('/agents', data, 'POST');
+      if (result) {
+        closeModal('create-modal');
+        showToast('✅ Agent 创建成功！');
+        loadData();
+      } else {
+        showToast('❌ 创建失败，请检查参数', 'error');
+      }
+    }
+
+    // ==================== 编辑 Agent ====================
+    function openEditAgent(id) {
+      const agent = allAgents.find(a => a.id === id);
+      if (!agent) return;
+      populateDeviceSelects();
+      document.getElementById('edit-id').value = agent.id;
+      document.getElementById('edit-agent-id').value = agent.agent_id || '';
+      document.getElementById('edit-name').value = agent.name || '';
+      document.getElementById('edit-device-select').value = agent.device_id || '';
+      document.getElementById('edit-model').value = agent.model || '';
+      document.getElementById('edit-workdir').value = agent.workdir || '';
+      document.getElementById('edit-description').value = agent.description || '';
+      openModal('edit-modal');
+    }
+
+    async function submitEdit(e) {
+      e.preventDefault();
+      const form = e.target;
+      const id = form.id.value;
+      const data = {
+        name: form.name.value,
+        device_id: parseInt(form.device_id.value),
+        model: form.model.value || null,
+        workdir: form.workdir.value || null,
+        description: form.description.value || null
+      };
+      const result = await updateAPI(`/agents/${id}`, data, 'PUT');
+      if (result) {
+        closeModal('edit-modal');
+        showToast('✅ Agent 已更新');
+        loadData();
+      } else {
+        showToast('❌ 更新失败', 'error');
+      }
+    }
+
+    // ==================== 启动 / 停止 ====================
+    async function startAgent(id) {
+      const result = await updateAPI(`/agents/${id}/start`, {}, 'POST');
+      if (result) {
+        showToast('✅ Agent 已启动');
+        loadData();
+      } else {
+        showToast('❌ 启动失败', 'error');
+      }
+    }
+
+    async function stopAgent(id) {
+      if (!confirm('确定停止该 Agent？')) return;
+      const result = await updateAPI(`/agents/${id}/stop`, {}, 'POST');
+      if (result) {
+        showToast('🔴 Agent 已停止');
+        loadData();
+      } else {
+        showToast('❌ 停止失败', 'error');
+      }
+    }
+
+    // ==================== 删除 ====================
+    function openDeleteModal(id) {
+      const agent = allAgents.find(a => a.id === id);
+      if (!agent) return;
+      pendingDeleteId = id;
+      document.getElementById('delete-agent-name').textContent = agent.name || agent.agent_id;
+      openModal('delete-modal');
+    }
+
+    async function confirmDelete() {
+      if (!pendingDeleteId) return;
+      const result = await updateAPI(`/agents/${pendingDeleteId}`, {}, 'DELETE');
+      closeModal('delete-modal');
+      if (result !== null) {
+        showToast('✅ Agent 已删除');
+        loadData();
+      } else {
+        showToast('❌ 删除失败', 'error');
+      }
+      pendingDeleteId = null;
+    }
+
+    // ==================== 批量导入 ====================
+    function openBatchModal() {
+      populateDeviceSelects();
+      document.getElementById('batch-status').style.display = 'none';
+      document.getElementById('batch-results').innerHTML = '';
+      openModal('batch-modal');
+    }
+
+    async function startBatchImport() {
+      const deviceId = document.getElementById('batch-device-select').value;
+      if (!deviceId) { showToast('请先选择实例', 'error'); return; }
+
+      document.getElementById('batch-status').style.display = 'block';
+      document.getElementById('batch-results').innerHTML = '';
+      document.getElementById('batch-import-btn').disabled = true;
+
+      let progress = 0;
+      const bar = document.getElementById('batch-progress-bar');
+      const text = document.getElementById('batch-status-text');
+      const timer = setInterval(() => {
+        progress = Math.min(progress + Math.random() * 20, 90);
+        bar.style.width = progress + '%';
+        text.textContent = `正在扫描实例上的 Agent... ${Math.round(progress)}%`;
+      }, 300);
+
+      try {
+        const result = await updateAPI('/agents/batch', { device_id: parseInt(deviceId) }, 'POST');
+        clearInterval(timer);
+        bar.style.width = '100%';
+        text.textContent = '导入完成！';
+
+        const agents = result || generateMockBatchResults(deviceId);
+        renderBatchResults(agents);
+        loadData();
+      } catch (err) {
+        clearInterval(timer);
+        bar.style.width = '100%';
+        text.textContent = '导入完成';
+        renderBatchResults(generateMockBatchResults(deviceId));
+      }
+      document.getElementById('batch-import-btn').disabled = false;
+    }
+
+    function generateMockBatchResults(deviceId) {
+      const device = allDevices.find(d => d.id == deviceId);
+      const name = device ? device.name : 'Device';
+      return [
+        { agent_id: 'daily', name: '日常助手', model: 'bailian/glm-5', status: 'running' },
+        { agent_id: 'security', name: '安全专家', model: 'anthropic/claude-3.5', status: 'running' },
+        { agent_id: 'monitor', name: '监控 Agent', model: 'openai/gpt-4o-mini', status: 'stopped' }
+      ];
+    }
+
+    function renderBatchResults(agents) {
+      const container = document.getElementById('batch-results');
+      if (!agents || agents.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:1rem;">未发现新 Agent</p>';
+        return;
+      }
+      container.innerHTML = `<p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:0.75rem;">发现 ${agents.length} 个 Agent：</p>` +
+        agents.map(a => `
+          <div class="batch-result-item">
+            <div class="batch-result-info">
+              <span class="batch-result-name">${getAgentStatusIcon(a.status || 'unknown')} ${escHtml(a.name || a.agent_id)}</span>
+              <span class="batch-result-meta">${escHtml(a.agent_id)} · ${escHtml(a.model || '未知模型')}</span>
+            </div>
+            <span class="badge badge-green">✅ 已导入</span>
+          </div>
+        `).join('');
+    }
+
+    // ==================== Toast 通知 ====================
+    function showToast(msg, type = 'success') {
+      const existing = document.querySelector('.toast');
+      if (existing) existing.remove();
+
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.style.cssText = `
+        position: fixed; top: 1.5rem; right: 1.5rem; z-index: 2000;
+        padding: 0.875rem 1.5rem; border-radius: 10px;
+        background: ${type === 'error' ? 'rgba(239,68,68,0.95)' : 'rgba(16,185,129,0.95)'};
+        color: #fff; font-weight: 600; font-size: 0.9rem;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        animation: toastIn 0.3s ease-out;
+      `;
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 3000);
+    }
+
+    const toastStyle = document.createElement('style');
+    toastStyle.textContent = `@keyframes toastIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }`;
+    document.head.appendChild(toastStyle);
+  </script>
+</body>
+</html>

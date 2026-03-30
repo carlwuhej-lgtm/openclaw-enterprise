@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>日志转发 - OpenClaw Enterprise</title>
+  <link rel="stylesheet" href="/css/style.css?v=11">
+  <link rel="stylesheet" href="/css/responsive.css?v=11">
+  <style>
+    .stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .log-container { background: #0d1117; border: 1px solid var(--dark-border); border-radius: 8px; overflow: hidden; }
+    .log-header { display: grid; grid-template-columns: 120px 80px 100px 150px 120px 1fr; gap: 1rem; padding: 0.75rem 1rem; background: rgba(99,102,241,0.1); border-bottom: 1px solid var(--dark-border); font-weight: 600; color: var(--primary); font-size: 0.85rem; }
+    .log-row { display: grid; grid-template-columns: 120px 80px 100px 150px 120px 1fr; gap: 1rem; padding: 0.75rem 1rem; border-bottom: 1px solid rgba(51,65,85,0.5); font-size: 0.85rem; }
+    .log-row:hover { background: rgba(99,102,241,0.05); }
+    .severity-badge { padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+    .severity-emerg, .severity-alert, .severity-crit { background: rgba(239,68,68,0.25); color: #fca5a5; }
+    .severity-err { background: rgba(245,158,11,0.25); color: #fcd34d; }
+    .severity-warning, .severity-notice { background: rgba(59,130,246,0.25); color: #93c5fd; }
+    .severity-info { background: rgba(16,185,129,0.25); color: #6ee7b7; }
+    .severity-debug { background: rgba(107,114,128,0.25); color: #9ca3af; }
+    .log-message { color: #94a3b8; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .filter-bar { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .filter-bar input, .filter-bar select { padding: 0.5rem 0.875rem; background: var(--dark-bg); border: 1px solid var(--dark-border); border-radius: 8px; color: var(--text-primary); }
+    .service-indicator { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 8px; color: var(--success); }
+    .service-indicator.offline { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: var(--danger); }
+    .pagination { display: flex; justify-content: space-between; padding: 1rem 1.5rem; border-top: 1px solid var(--dark-border); background: rgba(15,23,42,0.3); }
+    .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: #1e293b; border: 1px solid var(--dark-border); border-radius: 12px; width: 100%; max-width: 500px; }
+    .modal-header { padding: 1.5rem; border-bottom: 1px solid var(--dark-border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer { padding: 1.5rem; border-top: 1px solid var(--dark-border); display: flex; gap: 1rem; justify-content: flex-end; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+    .form-group input, .form-group select { width: 100%; padding: 0.75rem; background: var(--dark-bg); border: 1px solid var(--dark-border); border-radius: 8px; color: var(--text-primary); }
+    .form-hint { font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem; }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo"><div class="logo-brand"><div class="logo-icon">🐱</div><div class="logo-text"><h1>OpenClaw</h1><p>Enterprise</p></div></div></div>
+    <div class="nav-section"><div class="nav-section-title">总览</div><ul class="nav-menu"><li><a href="/pages/dashboard">📊 控制台</a></li></ul></div>
+    <div class="nav-section"><div class="nav-section-title">资产管理</div><ul class="nav-menu"><li><a href="/pages/devices">💻 实例管理</a></li><li><a href="/pages/agents">🤖 Agent 管理</a></li><li><a href="/pages/tenants">🏢 租户管理</a></li></ul></div>
+    <div class="nav-section"><div class="nav-section-title">安全管控</div><ul class="nav-menu"><li><a href="/pages/policies">🛡️ 安全管控</a></li><li><a href="/pages/scanner">🔍 网络扫描</a></li></ul></div>
+    <div class="nav-section"><div class="nav-section-title">监控审计</div><ul class="nav-menu"><li><a href="/pages/alerts">🚨 告警中心</a></li><li><a href="/pages/audit">📋 审计日志</a></li><li><a href="/pages/host">🖥️ 主机监控</a></li><li><a href="/pages/syslog" class="active">📜 日志转发</a></li></ul></div>
+    <div class="nav-section"><div class="nav-section-title">系统工具</div><ul class="nav-menu"><li><a href="/pages/clinic">🏥 急救室</a></li><li><a href="/pages/notification">🔔 通知配置</a></li></ul></div>
+  </aside>
+  <main class="main-content">
+    <div class="topbar"><div class="breadcrumb"><div class="breadcrumb-item">🏠 首页</div><span class="breadcrumb-separator">/</span><div class="breadcrumb-item">日志转发</div></div><div class="user-menu"><div class="user-avatar">S</div><div class="user-info"><span class="user-name">丝可乐</span><span class="user-role">安全管理员</span></div></div></div>
+    <div class="content">
+      <div class="page-header"><h1 class="page-title">📜 日志转发中心</h1><p class="page-subtitle">将 OpenClaw 日志转发到第三方日志服务器（ELK/Splunk 等）</p></div>
+      
+      <div class="card"><div class="card-header"><div class="card-title">📡 转发目标配置</div><div class="card-actions"><button class="btn btn-primary btn-sm" onclick="showAddTargetModal()">➕ 添加转发目标</button></div></div><div class="card-body" style="padding:0;"><table style="width:100%;"><thead><tr><th style="padding:0.75rem;text-align:left;">名称</th><th style="padding:0.75rem;text-align:left;">目标地址</th><th style="padding:0.75rem;text-align:left;">端口</th><th style="padding:0.75rem;text-align:left;">协议</th><th style="padding:0.75rem;text-align:left;">过滤</th><th style="padding:0.75rem;text-align:left;">状态</th><th style="padding:0.75rem;text-align:left;">操作</th></tr></thead><tbody id="forward-targets-list"><tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">加载中...</td></tr></tbody></table></div></div>
+      
+      <div class="card"><div class="card-header"><div class="card-title">🧪 测试转发</div></div><div class="card-body"><div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;"><select id="test-target" style="padding:0.5rem;min-width:200px;"><option value="">选择转发目标...</option></select><select id="test-severity" style="padding:0.5rem;"><option value="info">Info</option><option value="warning">Warning</option><option value="err">Error</option><option value="crit">Critical</option></select><input type="text" id="test-message" placeholder="测试消息..." value="OpenClaw 日志转发测试" style="flex:1;padding:0.5rem;min-width:200px;"><button class="btn btn-primary" onclick="sendTestLog()">📨 发送测试日志</button></div><div style="margin-top:1rem;padding:0.75rem;background:rgba(99,102,241,0.1);border-radius:8px;font-size:0.85rem;color:var(--text-secondary);">💡 说明：点击发送会生成一条测试日志，并尝试转发到选中的目标服务器。</div></div></div>
+      
+      <div class="card"><div class="card-header"><div class="card-title">📋 最近日志</div><div class="card-actions"><button class="btn btn-secondary btn-sm" onclick="loadLogs()">🔄 刷新</button></div></div><div class="card-body" style="padding:0;"><div class="log-container"><div class="log-header"><div>时间</div><div>严重性</div><div>设施</div><div>主机</div><div>进程</div><div>消息</div></div><div id="log-list"></div></div><div class="pagination"><div class="pagination-info">共 <span id="total-records">0</span> 条，第 <span id="current-page">1</span> 页</div><div style="display:flex;gap:0.5rem;"><button class="page-btn" id="btn-prev" onclick="prevPage()" disabled>‹ 上一页</button><button class="page-btn" id="btn-next" onclick="nextPage()">下一页 ›</button></div></div></div></div>
+    </div>
+  </main>
+
+  <!-- 添加转发目标模态框 -->
+  <div id="add-target-modal" class="modal-overlay"><div class="modal"><div class="modal-header"><h3 style="margin:0;">📡 添加日志转发目标</h3><button onclick="hideAddTargetModal()" style="background:none;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;">×</button></div><div class="modal-body"><div class="form-group"><label>名称</label><input type="text" id="target-name" placeholder="例如：公司 ELK 服务器"></div><div class="form-group"><label>目标地址</label><input type="text" id="target-host" placeholder="例如：192.168.1.100" style="font-family:monospace;"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;"><div class="form-group"><label>端口</label><input type="number" id="target-port" value="514" style="font-family:monospace;"></div><div class="form-group"><label>协议</label><select id="target-protocol"><option value="udp">UDP</option><option value="tcp">TCP</option></select></div></div><div class="form-group"><label>设施过滤（可选）</label><select id="target-facility"><option value="">全部设施</option><option value="kern">Kernel</option><option value="user">User</option><option value="daemon">Daemon</option><option value="auth">Auth</option><option value="syslog">Syslog</option></select><div class="form-hint">只转发指定设施的日志</div></div><div class="form-group"><label>严重性过滤（可选）</label><select id="target-severity-min"><option value="">全部严重性</option><option value="debug">Debug 及以上</option><option value="info">Info 及以上</option><option value="warning">Warning 及以上</option><option value="err">Error 及以上</option><option value="crit">Critical 及以上</option></select><div class="form-hint">只转发等于或高于此严重性的日志</div></div></div><div class="modal-footer"><button onclick="hideAddTargetModal()" class="btn btn-secondary">取消</button><button onclick="submitAddTarget()" class="btn btn-primary">添加转发目标</button></div></div></div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    let currentPage = 1, pageSize = 50, totalRecords = 0;
+
+    async function authFetch(url, options = {}) {
+      const token = localStorage.getItem('access_token');
+      if (!options.headers) options.headers = {};
+      if (token) options.headers['Authorization'] = 'Bearer ' + token;
+      options.headers['Content-Type'] = 'application/json';
+      const r = await fetch(url, options);
+      if (r.status === 401) { localStorage.removeItem('access_token'); window.location.href = '/pages/login.html'; throw new Error('Unauthorized'); }
+      return r;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => { loadForwardTargets(); loadLogs(); });
+
+    async function loadForwardTargets() {
+      try {
+        const r = await authFetch(API_BASE + '/api/syslog/forward-targets');
+        const d = await r.json();
+        const targets = d.targets || [];
+        const tbody = document.getElementById('forward-targets-list');
+        const select = document.getElementById('test-target');
+        
+        select.innerHTML = '<option value="">选择转发目标...</option>';
+        
+        if (targets.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">暂无转发目标<br><span style="font-size:0.85rem;margin-top:0.5rem;display:block;">点击"添加转发目标"配置日志外发</span></td></tr>';
+          return;
+        }
+        
+        tbody.innerHTML = targets.map(t => '<tr><td style="padding:0.75rem;"><strong>' + escapeHtml(t.name) + '</strong></td><td style="padding:0.75rem;font-family:monospace;">' + t.host + '</td><td style="padding:0.75rem;font-family:monospace;">' + t.port + '</td><td style="padding:0.75rem;"><span class="severity-badge severity-info">' + t.protocol.toUpperCase() + '</span></td><td style="padding:0.75rem;font-size:0.85rem;color:var(--text-secondary);">' + (t.facility || t.severity_min ? '已配置' : '无') + '</td><td style="padding:0.75rem;">' + (t.enabled ? '<span style="color:var(--success);">● 启用</span>' : '<span style="color:var(--text-muted);">● 禁用</span>') + '</td><td style="padding:0.75rem;"><button class="btn btn-secondary btn-xs" onclick="testTarget(' + t.id + ')" style="margin-right:0.5rem;">🔍 测试</button><button class="btn btn-secondary btn-xs" onclick="toggleTarget(' + t.id + ')">' + (t.enabled ? '禁用' : '启用') + '</button><button class="btn btn-danger btn-xs" onclick="deleteTarget(' + t.id + ')" style="margin-left:0.5rem;">🗑️ 删除</button></td></tr>').join('');
+        
+        targets.forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t.id;
+          opt.textContent = t.name + ' (' + t.host + ':' + t.port + ')';
+          select.appendChild(opt);
+        });
+      } catch(e) { console.error(e); }
+    }
+
+    function showAddTargetModal() { document.getElementById('add-target-modal').classList.add('show'); }
+    function hideAddTargetModal() { document.getElementById('add-target-modal').classList.remove('show'); document.getElementById('target-name').value = ''; document.getElementById('target-host').value = ''; }
+    
+    async function submitAddTarget() {
+      const name = document.getElementById('target-name').value.trim();
+      const host = document.getElementById('target-host').value.trim();
+      const port = document.getElementById('target-port').value;
+      const protocol = document.getElementById('target-protocol').value;
+      const facility = document.getElementById('target-facility').value;
+      const severity_min = document.getElementById('target-severity-min').value;
+      
+      if (!name || !host) { alert('⚠️ 请填写名称和目标地址'); return; }
+      
+      try {
+        const r = await authFetch(API_BASE + '/api/syslog/forward-targets', {
+          method: 'POST',
+          body: JSON.stringify({ name, host, port: parseInt(port), protocol, facility: facility || null, severity_min: severity_min || null })
+        });
+        const d = await r.json();
+        alert(d.success ? '✅ ' + d.message : '❌ ' + (d.detail || '失败'));
+        if (d.success) { hideAddTargetModal(); loadForwardTargets(); }
+      } catch(e) { alert('❌ ' + e.message); }
+    }
+
+    async function deleteTarget(id) { if (!confirm('确定删除此转发目标？')) return; try { const r = await authFetch(API_BASE + '/api/syslog/forward-targets/' + id, { method: 'DELETE' }); const d = await r.json(); alert(d.success ? '✅ 已删除' : '❌ 失败'); loadForwardTargets(); } catch(e) { alert('❌ ' + e.message); } }
+    async function toggleTarget(id) { try { const r = await authFetch(API_BASE + '/api/syslog/forward-targets/' + id + '/toggle', { method: 'POST' }); const d = await r.json(); alert(d.success ? (d.enabled ? '✅ 已启用' : '✅ 已禁用') : '❌ 失败'); loadForwardTargets(); } catch(e) { alert('❌ ' + e.message); } }
+    async function testTarget(id) { try { const r = await authFetch(API_BASE + '/api/syslog/forward-targets/' + id + '/test', { method: 'POST' }); const d = await r.json(); alert(d.success ? '✅ ' + d.message : '❌ ' + d.message); } catch(e) { alert('❌ ' + e.message); } }
+
+    async function sendTestLog() {
+      const targetId = document.getElementById('test-target').value;
+      const severity = document.getElementById('test-severity').value;
+      const message = document.getElementById('test-message').value || '测试日志';
+      
+      if (!targetId) { alert('⚠️ 请选择转发目标'); return; }
+      
+      try {
+        const r = await authFetch(API_BASE + '/api/syslog/test', { method: 'POST', body: JSON.stringify({ severity, message }) });
+        const d = await r.json();
+        alert(d.success ? '✅ 测试日志已发送并转发' : '❌ ' + (d.detail || '失败'));
+      } catch(e) { alert('❌ ' + e.message); }
+    }
+
+    async function loadLogs() {
+      const params = new URLSearchParams({ page: currentPage, page_size: pageSize });
+      const list = document.getElementById('log-list');
+      list.innerHTML = '<div class="empty-state">⏳ 加载中...</div>';
+      try {
+        const r = await authFetch(API_BASE + '/api/syslog/entries?' + params.toString());
+        const d = await r.json();
+        const items = d.items || [];
+        totalRecords = d.total || 0;
+        document.getElementById('total-records').textContent = totalRecords;
+        document.getElementById('current-page').textContent = currentPage;
+        document.getElementById('btn-prev').disabled = currentPage <= 1;
+        document.getElementById('btn-next').disabled = currentPage * pageSize >= totalRecords;
+        if (items.length === 0) { list.innerHTML = '<div class="empty-state">📭 暂无日志</div>'; return; }
+        list.innerHTML = items.map(log => '<div class="log-row"><div style="color:var(--text-muted);white-space:nowrap;">' + new Date(log.timestamp).toLocaleString('zh-CN') + '</div><div><span class="severity-badge severity-' + (log.severity || 'info') + '">' + (log.severity || 'info') + '</span></div><div style="color:var(--text-secondary);">' + (log.facility || '-') + '</div><div style="font-family:monospace;">' + (log.hostname || '-') + '</div><div style="font-family:monospace;color:var(--text-secondary);">' + (log.app_name || '-') + '</div><div class="log-message">' + escapeHtml(log.message || '') + '</div></div>').join('');
+      } catch(e) { list.innerHTML = '<div class="empty-state" style="color:var(--danger);">❌ ' + e.message + '</div>'; }
+    }
+
+    function prevPage() { if (currentPage > 1) { currentPage--; loadLogs(); } }
+    function nextPage() { currentPage++; loadLogs(); }
+    function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+    window.onclick = function(event) { if (event.target.id === 'add-target-modal') hideAddTargetModal(); }
+  </script>
+</body>
+</html>

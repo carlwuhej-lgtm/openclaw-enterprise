@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>分析中心 - OpenClaw Enterprise</title>
+  <link rel="stylesheet" href="/css/style.css?v=10">
+  <style>
+    .analytics-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--dark-border);
+      margin-bottom: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    .analytics-tab-btn {
+      padding: 0.75rem 1.5rem;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.25s ease, background 0.25s ease;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .analytics-tab-btn:hover {
+      color: var(--text-primary);
+      background: rgba(99,102,241,0.05);
+    }
+    .analytics-tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+    .analytics-tab-content {
+      display: none;
+    }
+    .analytics-tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-brand">
+        <div class="logo-icon">🐱</div>
+        <div class="logo-text">
+          <h1>OpenClaw</h1>
+          <p>Enterprise</p>
+        </div>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">总览</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/dashboard" ><span class="nav-icon">📊</span> 控制台</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">资产管理</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/devices" ><span class="nav-icon">💻</span> 实例管理</a></li>
+        <li><a href="/pages/agents" ><span class="nav-icon">🤖</span> Agent 管理</a></li>
+        <li><a href="/pages/tenants" ><span class="nav-icon">🏢</span> 租户管理</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">安全管控</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/policies" ><span class="nav-icon">🛡️</span> 安全管控</a></li>
+        <li><a href="/pages/scanner" ><span class="nav-icon">🔍</span> 网络扫描</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">监控审计</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/alerts" ><span class="nav-icon">🚨</span> 告警中心</a></li>
+        <li><a href="/pages/audit" ><span class="nav-icon">📋</span> 审计日志</a></li>
+        <li><a href="/pages/syslog"><span class="nav-icon">📜</span> 日志中心</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">分析报告</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/analytics" class="active"><span class="nav-icon">📊</span> 分析中心</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">系统工具</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/clinic" class="active"><span class="nav-icon">🏥</span> 急救室</a></li>
+        <li><a href="/pages/notification" ><span class="nav-icon">🔔</span> 通知配置</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="topbar">
+      <div class="breadcrumb">
+        <div class="breadcrumb-item"><span>🏠</span><span>首页</span></div>
+        <span class="breadcrumb-separator">/</span>
+        <div class="breadcrumb-item">分析中心</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn">🔔</button>
+        <div class="user-menu">
+          <div class="user-avatar">S</div>
+          <div class="user-info">
+            <span class="user-name">丝可乐</span>
+            <span class="user-role">安全管理员</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-header">
+        <h1 class="page-title">📊 分析中心</h1>
+        <p class="page-subtitle">流量分析、AI 辅助、报表导出</p>
+      </div>
+
+      <!-- Tab Bar -->
+      <div class="analytics-tabs">
+        <button class="analytics-tab-btn active" onclick="switchTab('traffic')">📡 流量分析</button>
+        <button class="analytics-tab-btn" onclick="switchTab('ai')">🧠 AI 辅助</button>
+        <button class="analytics-tab-btn" onclick="switchTab('export')">📄 报表导出</button>
+      </div>
+
+      <!-- ==================== Tab 1: 流量分析 ==================== -->
+      <div id="tab-traffic" class="analytics-tab-content active">
+        <div class="content-grid">
+          <div class="left-column">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">📊 流量统计</div>
+              </div>
+              <div class="card-body">
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;">
+                  <div style="padding:1rem;background:rgba(99,102,241,0.1);border-radius:8px;border-left:3px solid var(--primary);">
+                    <div style="font-size:2rem;font-weight:700;color:var(--primary)" id="traffic-stat-packets">-</div>
+                    <div style="color:var(--text-secondary);font-size:0.85rem;">审计日志总数</div>
+                  </div>
+                  <div style="padding:1rem;background:rgba(239,68,68,0.1);border-radius:8px;border-left:3px solid var(--danger);">
+                    <div style="font-size:2rem;font-weight:700;color:var(--danger)" id="traffic-stat-hosts-agents">-</div>
+                    <div style="color:var(--text-secondary);font-size:0.85rem;">主机 / Agent</div>
+                  </div>
+                  <div style="padding:1rem;background:rgba(245,158,11,0.1);border-radius:8px;border-left:3px solid var(--warning);">
+                    <div style="font-size:2rem;font-weight:700;color:var(--warning)" id="traffic-stat-llm">-</div>
+                    <div style="color:var(--text-secondary);font-size:0.85rem;">LLM 调用</div>
+                  </div>
+                  <div style="padding:1rem;background:rgba(16,185,129,0.1);border-radius:8px;border-left:3px solid var(--success);">
+                    <div style="font-size:2rem;font-weight:700;color:var(--success)" id="traffic-stat-blocked">-</div>
+                    <div style="color:var(--text-secondary);font-size:0.85rem;">已拦截</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:1.5rem;">
+              <div class="card-header">
+                <div class="card-title">🔍 URL 检测</div>
+              </div>
+              <div class="card-body">
+                <div style="display:flex;flex-direction:column;gap:1rem;">
+                  <div>
+                    <label style="display:block;margin-bottom:0.5rem;font-weight:600;">检测 URL</label>
+                    <input type="url" id="traffic-check-url"
+                           style="width:100%;padding:0.75rem;background:var(--dark-bg);border:1px solid var(--dark-border);border-radius:8px;color:var(--text-primary);"
+                           placeholder="https://api.openai.com/v1/chat/completions">
+                  </div>
+                  <div>
+                    <label style="display:block;margin-bottom:0.5rem;font-weight:600;">源 IP（可选）</label>
+                    <input type="text" id="traffic-check-ip"
+                           style="width:100%;padding:0.75rem;background:var(--dark-bg);border:1px solid var(--dark-border);border-radius:8px;color:var(--text-primary);"
+                           placeholder="192.168.1.100">
+                  </div>
+                  <button class="btn btn-primary" onclick="trafficCheckURL()" style="width:100%;justify-content:center;">
+                    🔍 检测
+                  </button>
+                  <div id="traffic-check-result" style="display:none;padding:1rem;background:rgba(239,68,68,0.1);border-radius:8px;">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:1.5rem;">
+              <div class="card-header">
+                <div class="card-title">📈 24 小时趋势</div>
+                <div class="card-actions">
+                  <button class="btn btn-secondary btn-sm" onclick="trafficLoadTimeline()">🔄 刷新</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div id="traffic-timeline-chart" style="display:flex;align-items:flex-end;gap:2px;height:120px;padding:0.5rem 0;">
+                  <div style="text-align:center;padding:1rem;color:var(--text-muted);width:100%;">加载中...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="right-column">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🚨 告警记录</div>
+              </div>
+              <div class="card-body" style="padding:0;max-height:300px;overflow-y:auto;">
+                <div class="alert-list" id="traffic-llm-alerts">
+                  <div style="text-align:center;padding:1rem;color:var(--text-muted);">加载中...</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:1.5rem;">
+              <div class="card-header">
+                <div class="card-title">💻 检测到实例</div>
+              </div>
+              <div class="card-body" style="padding:0;">
+                <div class="table-container">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>设备</th>
+                        <th>日志数</th>
+                        <th>风险</th>
+                      </tr>
+                    </thead>
+                    <tbody id="traffic-detected-devices">
+                      <tr><td colspan="3" style="text-align:center;padding:2rem;color:var(--text-muted);">加载中...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:1.5rem;">
+              <div class="card-header">
+                <div class="card-title">📋 最近日志</div>
+                <div class="card-actions">
+                  <button class="btn btn-secondary btn-sm" onclick="trafficLoadRecent()">🔄 刷新</button>
+                </div>
+              </div>
+              <div class="card-body" style="padding:0;max-height:400px;overflow-y:auto;">
+                <div class="table-container">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>时间</th>
+                        <th>操作</th>
+                        <th>风险</th>
+                        <th>状态</th>
+                      </tr>
+                    </thead>
+                    <tbody id="traffic-recent-logs">
+                      <tr><td colspan="4" style="text-align:center;padding:1rem;color:var(--text-muted);">加载中...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== Tab 2: AI 辅助 ==================== -->
+      <div id="tab-ai" class="analytics-tab-content">
+        <div class="content-grid">
+          <div class="left-column">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">📊 风险统计</div>
+              </div>
+              <div class="card-body">
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;">
+                  <div style="padding:1rem;background:rgba(99,102,241,0.1);border-radius:8px;border-left:3px solid var(--primary);">
+                    <div style="font-size:2rem;font-weight:700;color:var(--primary)" id="ai-stat-hosts">0</div>
+                    <div style="color:var(--text-secondary);font-size:0.85rem;">🖥️ 主机</div>
+                  </div>
+                  <div style="padding:1rem;background:rgba(99,102,241,0.1);border-radius:8px;border-left:3px solid #8b5cf6;">
+                    <div style="font-size:2rem;font-weight:700;color:#8b5cf6" id="ai-stat-agents">0</div>
+                    <div style="color:var(--text-secondary);font-size:0.85rem;">🤖 Agent</div>
+                  </div>
+                  <div style="padding:1rem;background:rgba(239,68,68,0.1);border-radius:8px;border-left:3px solid var(--danger);">
+                    <div style="font-size:2rem;font-weight:700;color:var(--danger)" id="ai-stat-high-risk">0</div>
+                    <div style="color:var(--text-secondary);font-size:0.85rem;">高风险实例</div>
+                  </div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-top:1rem;">
+                  <div style="padding:1rem;background:rgba(245,158,11,0.1);border-radius:8px;border-left:3px solid var(--warning);">
+                    <div style="font-size:2rem;font-weight:700;color:var(--warning)" id="ai-stat-anomalies">0</div>
+                    <div style="color:var(--text-secondary);font-size:0.85rem;">异常告警</div>
+                  </div>
+                  <div style="padding:1rem;background:rgba(16,185,129,0.1);border-radius:8px;border-left:3px solid var(--success);">
+                    <div style="font-size:2rem;font-weight:700;color:var(--success)" id="ai-stat-avg-risk">0</div>
+                    <div style="color:var(--text-secondary);font-size:0.85rem;">平均风险分</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:1.5rem;">
+              <div class="card-header">
+                <div class="card-title">🎯 风险评分排行</div>
+              </div>
+              <div class="card-body" style="padding:0;">
+                <div class="table-container">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>实例 IP</th>
+                        <th>风险分</th>
+                        <th>等级</th>
+                        <th>因素</th>
+                      </tr>
+                    </thead>
+                    <tbody id="ai-risk-scores">
+                      <tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">暂无数据</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:1.5rem;">
+              <div class="card-header">
+                <div class="card-title">⚙️ 自动响应配置</div>
+              </div>
+              <div class="card-body">
+                <div style="display:flex;flex-direction:column;gap:1rem;">
+                  <div>
+                    <label style="display:block;margin-bottom:0.5rem;font-weight:600;">异常类型</label>
+                    <select id="ai-anomaly-type" class="tenant-select" style="width:100%;padding:0.75rem;">
+                      <option value="llm_call_spike">LLM 调用突增</option>
+                      <option value="high_frequency_operations">高频操作</option>
+                      <option value="abnormal_activity_time">异常活跃时间</option>
+                      <option value="risk_trend_increasing">风险趋势上升</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="display:block;margin-bottom:0.5rem;font-weight:600;">响应动作</label>
+                    <select id="ai-response-action" class="tenant-select" style="width:100%;padding:0.75rem;">
+                      <option value="send_alert">发送告警</option>
+                      <option value="block_device">阻断实例</option>
+                      <option value="kill_process">终止进程</option>
+                      <option value="increase_monitoring">加强监控</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="display:block;margin-bottom:0.5rem;font-weight:600;">置信度阈值</label>
+                    <input type="range" id="ai-confidence-threshold" min="0" max="100" value="80"
+                           style="width:100%;" oninput="document.getElementById('ai-threshold-value').textContent=this.value+'%'">
+                    <div style="text-align:center;color:var(--text-secondary);" id="ai-threshold-value">80%</div>
+                  </div>
+                  <button class="btn btn-primary" onclick="aiConfigureAction()" style="width:100%;justify-content:center;">
+                    💾 保存配置
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="right-column">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🚨 异常告警</div>
+                <button class="btn btn-secondary btn-sm" onclick="aiLoadAnomalies()">🔄 刷新</button>
+              </div>
+              <div class="card-body" style="padding:0;max-height:400px;overflow-y:auto;">
+                <div class="alert-list" id="ai-anomaly-list">
+                  <div style="text-align:center;padding:1rem;color:var(--text-muted);">暂无告警</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:1.5rem;">
+              <div class="card-header">
+                <div class="card-title">👤 行为画像</div>
+              </div>
+              <div class="card-body">
+                <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                  <div>
+                    <input type="text" id="ai-profile-ip" placeholder="输入实例 IP"
+                           style="width:100%;padding:0.75rem;background:var(--dark-bg);border:1px solid var(--dark-border);border-radius:8px;color:var(--text-primary);">
+                  </div>
+                  <button class="btn btn-primary" onclick="aiLoadProfile()" style="width:100%;justify-content:center;">
+                    🔍 查看画像
+                  </button>
+                  <div id="ai-profile-data" style="display:none;padding:1rem;background:rgba(99,102,241,0.1);border-radius:8px;">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:1.5rem;">
+              <div class="card-header">
+                <div class="card-title">ℹ️ AI 辅助说明</div>
+              </div>
+              <div class="card-body">
+                <div style="color:var(--text-secondary);line-height:1.8;font-size:0.9rem;">
+                  <p style="margin-bottom:0.75rem;"><strong>📊 风险评分</strong><br>基于多维度因素计算 0-100 分</p>
+                  <p style="margin-bottom:0.75rem;"><strong>🚨 异常检测</strong><br>检测偏离正常行为的活动</p>
+                  <p style="margin-bottom:0.75rem;"><strong>👤 行为画像</strong><br>学习实例正常行为模式</p>
+                  <p style="margin-bottom:0.75rem;"><strong>⚙️ 自动响应</strong><br>根据规则自动处置异常</p>
+                  <p><strong>⚠️ 注意事项</strong><br>AI 辅助需要学习期（约 24 小时）</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== Tab 3: 报表导出 ==================== -->
+      <div id="tab-export" class="analytics-tab-content">
+        <div class="content-grid">
+          <div class="left-column">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">📥 导出数据</div>
+              </div>
+              <div class="card-body">
+                <div style="display:flex;flex-direction:column;gap:1rem;">
+                  <div>
+                    <label style="display:block;margin-bottom:0.5rem;font-weight:600;">数据类型</label>
+                    <select id="exp-type" class="tenant-select" style="width:100%;padding:0.75rem;" onchange="expShowOptions()">
+                      <option value="devices">💻 实例列表</option>
+                      <option value="audit">📋 审计日志</option>
+                      <option value="alerts">🚨 告警列表</option>
+                      <option value="compliance">📊 合规报告</option>
+                      <option value="full_report">📋 完整安全报告</option>
+                    </select>
+                  </div>
+
+                  <div id="exp-date-range" style="display:none;">
+                    <label style="display:block;margin-bottom:0.5rem;font-weight:600;">日期范围</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                      <input type="date" id="exp-start-date"
+                             style="padding:0.75rem;background:var(--dark-bg);border:1px solid var(--dark-border);border-radius:8px;color:var(--text-primary);">
+                      <input type="date" id="exp-end-date"
+                             style="padding:0.75rem;background:var(--dark-bg);border:1px solid var(--dark-border);border-radius:8px;color:var(--text-primary);">
+                    </div>
+                  </div>
+
+                  <div id="exp-report-period" style="display:none;">
+                    <label style="display:block;margin-bottom:0.5rem;font-weight:600;">报告周期</label>
+                    <select id="exp-period-select" class="tenant-select" style="width:100%;padding:0.75rem;">
+                      <option value="daily">日报</option>
+                      <option value="weekly" selected>周报</option>
+                      <option value="monthly">月报</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style="display:block;margin-bottom:0.5rem;font-weight:600;">导出格式</label>
+                    <select id="exp-format" class="tenant-select" style="width:100%;padding:0.75rem;">
+                      <option value="csv">📄 CSV（Excel 可打开）</option>
+                      <option value="html">🌐 HTML（可打印）</option>
+                      <option value="pdf">📑 PDF（直接下载）</option>
+                    </select>
+                  </div>
+
+                  <button class="btn btn-primary" onclick="expExportData()" style="width:100%;justify-content:center;">
+                    📥 导出
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:1.5rem;">
+              <div class="card-header">
+                <div class="card-title">📝 导出历史</div>
+              </div>
+              <div class="card-body" style="padding:0;">
+                <div class="table-container">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>时间</th>
+                        <th>类型</th>
+                        <th>格式</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody id="exp-history">
+                      <tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">暂无导出记录</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="right-column">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">📊 数据概览</div>
+              </div>
+              <div class="card-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                  <div style="padding:1rem;background:rgba(99,102,241,0.1);border-radius:8px;border-left:3px solid var(--primary);">
+                    <div style="font-size:2rem;font-weight:700;color:var(--primary)" id="exp-total-devices">-</div>
+                    <div style="color:var(--text-secondary);font-size:0.85rem;">总实例数</div>
+                  </div>
+                  <div style="padding:1rem;background:rgba(16,185,129,0.1);border-radius:8px;border-left:3px solid var(--success);">
+                    <div style="font-size:2rem;font-weight:700;color:var(--success)" id="exp-total-audit">-</div>
+                    <div style="color:var(--text-secondary);font-size:0.85rem;">审计日志</div>
+                  </div>
+                  <div style="padding:1rem;background:rgba(245,158,11,0.1);border-radius:8px;border-left:3px solid var(--warning);">
+                    <div style="font-size:2rem;font-weight:700;color:var(--warning)" id="exp-total-alerts">-</div>
+                    <div style="color:var(--text-secondary);font-size:0.85rem;">告警总数</div>
+                  </div>
+                  <div style="padding:1rem;background:rgba(16,185,129,0.1);border-radius:8px;border-left:3px solid var(--success);">
+                    <div style="font-size:2rem;font-weight:700;color:var(--success)" id="exp-resolved-alerts">-</div>
+                    <div style="color:var(--text-secondary);font-size:0.85rem;">已解决</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:1.5rem;">
+              <div class="card-header">
+                <div class="card-title">📋 合规报告预览</div>
+              </div>
+              <div class="card-body">
+                <div style="color:var(--text-secondary);line-height:1.8;font-size:0.9rem;">
+                  <p style="margin-bottom:0.75rem;"><strong>报告内容</strong></p>
+                  <ul style="margin-left:1.5rem;margin-bottom:1rem;">
+                    <li>统计概览（实例数、告警数）</li>
+                    <li>审计摘要（操作类型分布）</li>
+                    <li>重要告警列表</li>
+                    <li>实例状态列表</li>
+                    <li>风险分布图��</li>
+                  </ul>
+                  <p style="margin-bottom:0.75rem;"><strong>导出格式</strong></p>
+                  <ul style="margin-left:1.5rem;">
+                    <li>HTML - 可直接打印或转 PDF</li>
+                    <li>CSV - Excel 可编辑</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:1.5rem;">
+              <div class="card-header">
+                <div class="card-title">ℹ️ 导出说明</div>
+              </div>
+              <div class="card-body">
+                <div style="color:var(--text-secondary);line-height:1.8;font-size:0.9rem;">
+                  <p style="margin-bottom:0.75rem;"><strong>📄 CSV 格式</strong><br>适用于 Excel 编辑和数据分析</p>
+                  <p style="margin-bottom:0.75rem;"><strong>🌐 HTML 格式</strong><br>适��于打印和生成 PDF 报告</p>
+                  <p style="margin-bottom:0.75rem;"><strong>📊 合规报告</strong><br>包含统计、审计、告警的完整报告</p>
+                  <p><strong>⚠️ 注意事项</strong><br>大量数据导出可能需要较长时间</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="/js/auth.js"></script>
+  <script>AUTH.requireAuth();</script>
+  <script src="/js/app.js?v=5"></script>
+  <script>
+    // ==================== Tab 切换 ====================
+    function switchTab(tabName) {
+      // 切换按钮状态
+      document.querySelectorAll('.analytics-tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      // 切换内容
+      document.querySelectorAll('.analytics-tab-content').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.add('active');
+    }
+
+    // ==================== 流量分析 JS ====================
+    // API_BASE already defined in app.js; override to use relative paths
+var ANALYTICS_API = '';
+
+    function trafficShowError(elementId, message) {
+      const el = document.getElementById(elementId);
+      if (el.tagName === 'TBODY') {
+        const cols = el.closest('table').querySelector('thead tr').children.length;
+        el.innerHTML = '<tr><td colspan="' + cols + '" style="text-align:center;padding:1rem;color:var(--danger);">' + message + '</td></tr>';
+      } else {
+        el.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--danger);">' + message + '</div>';
+      }
+    }
+
+    function trafficShowEmpty(elementId, message) {
+      const el = document.getElementById(elementId);
+      if (el.tagName === 'TBODY') {
+        const cols = el.closest('table').querySelector('thead tr').children.length;
+        el.innerHTML = '<tr><td colspan="' + cols + '" style="text-align:center;padding:1rem;color:var(--text-muted);">' + message + '</td></tr>';
+      } else {
+        el.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--text-muted);">' + message + '</div>';
+      }
+    }
+
+    async function trafficCheckURL() {
+      const url = document.getElementById('traffic-check-url').value;
+      const srcIp = document.getElementById('traffic-check-ip').value;
+      if (!url) { alert('请输入 URL'); return; }
+      const resultDiv = document.getElementById('traffic-check-result');
+      try {
+        const response = await authFetch('/api/traffic/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, src_ip: srcIp || undefined })
+        });
+        const result = await response.json();
+        resultDiv.style.display = 'block';
+        if (result.is_llm_call) {
+          const riskColor = result.risk_level === 'high' ? 'var(--danger)' : 'var(--warning)';
+          resultDiv.innerHTML = '<div style="color:' + riskColor + ';font-weight:600;margin-bottom:0.5rem;">⚠️ 检测到 LLM 调用</div><div style="font-size:0.85rem;"><div><strong>提供商:</strong> ' + (result.provider || '未知') + '</div><div><strong>风险等级:</strong> ' + result.risk_level.toUpperCase() + '</div><div><strong>原因:</strong> ' + (result.details?.reason || '未知') + '</div></div>';
+        } else {
+          resultDiv.innerHTML = '<div style="color:var(--success);font-weight:600;">✅ 未检测到 LLM 调用</div>';
+        }
+      } catch (error) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '<div style="color:var(--danger);font-weight:600;">⚠️ 无法连接服务器</div>';
+      }
+    }
+
+    async function trafficLoadStats() {
+      try {
+        const response = await authFetch('/api/traffic/stats');
+        const stats = await response.json();
+        document.getElementById('traffic-stat-packets').textContent = stats.total_packets ?? 0;
+        document.getElementById('traffic-stat-hosts-agents').textContent = `${stats.total_hosts ?? 0} / ${stats.total_agents ?? 0}`;
+        document.getElementById('traffic-stat-llm').textContent = stats.llm_calls_detected ?? 0;
+        document.getElementById('traffic-stat-blocked').textContent = stats.blocked ?? 0;
+      } catch (error) {
+        document.getElementById('traffic-stat-packets').textContent = '-';
+        document.getElementById('traffic-stat-hosts-agents').textContent = '-';
+        document.getElementById('traffic-stat-llm').textContent = '-';
+        document.getElementById('traffic-stat-blocked').textContent = '-';
+      }
+    }
+
+    async function trafficLoadRecent() {
+      try {
+        const response = await authFetch('/api/traffic/recent?limit=20');
+        const logs = await response.json();
+        const tbody = document.getElementById('traffic-recent-logs');
+        if (!logs || logs.length === 0) { trafficShowEmpty('traffic-recent-logs', '暂无数据'); return; }
+        tbody.innerHTML = logs.map(log => {
+          const time = log.timestamp ? new Date(log.timestamp).toLocaleTimeString('zh-CN') : '-';
+          const riskBadge = log.risk_level === 'high' ? 'red' : log.risk_level === 'medium' ? 'yellow' : 'green';
+          const statusBadge = log.status === 'blocked' ? 'red' : 'green';
+          return '<tr><td style="color:var(--text-muted);font-size:0.85rem;">' + time + '</td><td>' + (log.operation_type || '-') + '</td><td><span class="badge badge-' + riskBadge + '">' + (log.risk_level || 'low').toUpperCase() + '</span></td><td><span class="badge badge-' + statusBadge + '">' + (log.status || '-') + '</span></td></tr>';
+        }).join('');
+      } catch (error) {
+        trafficShowError('traffic-recent-logs', '无法连接服务器');
+      }
+    }
+
+    async function trafficLoadDevices() {
+      try {
+        const response = await authFetch('/api/traffic/devices');
+        const devices = await response.json();
+        const tbody = document.getElementById('traffic-detected-devices');
+        if (!devices || devices.length === 0) { trafficShowEmpty('traffic-detected-devices', '暂无实例'); return; }
+        tbody.innerHTML = devices.map(device => '<tr><td style="font-family:monospace">' + (device.hostname || device.name || device.ip || '-') + '</td><td>' + (device.openclaw_calls ?? 0) + '</td><td><span class="badge badge-' + (device.risk_level === 'high' ? 'red' : device.risk_level === 'medium' ? 'yellow' : 'green') + '">' + (device.risk_level || 'low').toUpperCase() + '</span></td></tr>').join('');
+      } catch (error) {
+        trafficShowError('traffic-detected-devices', '无法连接服务器');
+      }
+    }
+
+    async function trafficLoadAlerts() {
+      try {
+        const response = await authFetch('/api/traffic/alerts?limit=10');
+        const alerts = await response.json();
+        const container = document.getElementById('traffic-llm-alerts');
+        if (!alerts || alerts.length === 0) { trafficShowEmpty('traffic-llm-alerts', '暂无告警'); return; }
+        container.innerHTML = alerts.map(alert => {
+          const time = alert.timestamp ? new Date(alert.timestamp).toLocaleTimeString('zh-CN') : '-';
+          const icon = alert.level === 'high' || alert.level === 'critical' ? '🔴' : alert.level === 'medium' ? '🟠' : '🟡';
+          const colorVar = alert.level === 'high' || alert.level === 'critical' ? 'danger' : 'warning';
+          return '<div class="alert-item ' + (alert.level === 'high' || alert.level === 'critical' ? 'critical' : 'high') + '"><div class="alert-header"><span class="alert-title" style="color:var(--' + colorVar + ')">' + icon + ' ' + (alert.title || '告警') + '</span><span class="alert-time">' + time + '</span></div><div class="alert-desc">' + (alert.description || '') + '</div></div>';
+        }).join('');
+      } catch (error) {
+        trafficShowError('traffic-llm-alerts', '无法连接服务器');
+      }
+    }
+
+    async function trafficLoadTimeline() {
+      try {
+        const response = await authFetch('/api/traffic/timeline');
+        const data = await response.json();
+        const container = document.getElementById('traffic-timeline-chart');
+        if (!data || data.length === 0) { trafficShowEmpty('traffic-timeline-chart', '暂无数据'); return; }
+        const maxCount = Math.max(...data.map(d => d.count), 1);
+        container.innerHTML = data.map(d => {
+          const height = Math.max(4, (d.count / maxCount) * 100);
+          const color = d.count > 0 ? 'var(--primary)' : 'rgba(99,102,241,0.2)';
+          return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;" title="' + d.hour + ': ' + d.count + ' 条"><div style="width:100%;background:' + color + ';border-radius:2px 2px 0 0;height:' + height + '%;min-height:2px;transition:height 0.3s;"></div><div style="font-size:0.6rem;color:var(--text-muted);margin-top:2px;white-space:nowrap;">' + d.hour.replace(':00','') + '</div></div>';
+        }).join('');
+      } catch (error) {
+        trafficShowError('traffic-timeline-chart', '无法连接服务器');
+      }
+    }
+
+    // ==================== AI 辅助 JS ====================
+    async function aiLoadStatistics() {
+      try {
+        const response = await authFetch('/api/ai/analyze/statistics');
+        const stats = await response.json();
+        document.getElementById('ai-stat-hosts').textContent = stats.total_hosts || 0;
+        document.getElementById('ai-stat-agents').textContent = stats.total_agents || 0;
+        document.getElementById('ai-stat-high-risk').textContent = stats.high_risk_devices || 0;
+        document.getElementById('ai-stat-anomalies').textContent = stats.active_anomalies || 0;
+        document.getElementById('ai-stat-avg-risk').textContent = Math.round(stats.avg_risk_score || 0);
+      } catch (error) {
+        document.getElementById('ai-stat-hosts').textContent = '-';
+        document.getElementById('ai-stat-agents').textContent = '-';
+        document.getElementById('ai-stat-high-risk').textContent = '-';
+        document.getElementById('ai-stat-anomalies').textContent = '-';
+        document.getElementById('ai-stat-avg-risk').textContent = '-';
+      }
+    }
+
+    async function aiLoadRiskScores() {
+      try {
+        const response = await authFetch('/api/ai/analyze/risk-scores');
+        const scores = await response.json();
+        scores.sort((a, b) => b.score - a.score);
+        const tbody = document.getElementById('ai-risk-scores');
+        if (scores.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">暂无数据</td></tr>';
+          return;
+        }
+        tbody.innerHTML = scores.slice(0, 10).map(score => '<tr><td style="font-family:monospace">' + score.device_ip + '</td><td><div style="display:flex;align-items:center;gap:0.5rem;"><div class="risk-track" style="width:60px;height:6px;"><div class="risk-fill ' + score.level + '" style="width:' + score.score + '%"></div></div><span style="font-weight:600;">' + score.score + '</span></div></td><td><span class="badge badge-' + (score.level === 'critical' ? 'red' : score.level === 'high' ? 'red' : score.level === 'medium' ? 'yellow' : 'green') + '">' + score.level.toUpperCase() + '</span></td><td style="color:var(--text-secondary);font-size:0.85rem;">' + score.factors.slice(0, 2).join('; ') + '</td></tr>').join('');
+      } catch (error) {
+        document.getElementById('ai-risk-scores').innerHTML = '<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">无法连接服务器</td></tr>';
+      }
+    }
+
+    async function aiLoadAnomalies() {
+      try {
+        const response = await authFetch('/api/ai/analyze/anomalies');
+        const anomalies = await response.json();
+        const container = document.getElementById('ai-anomaly-list');
+        if (anomalies.length === 0) {
+          container.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--text-muted);">暂无异常告警 ✅</div>';
+          return;
+        }
+        container.innerHTML = anomalies.map(anomaly => '<div class="alert-item ' + (anomaly.severity === 'high' ? 'critical' : 'high') + '"><div class="alert-header"><span class="alert-title" style="color:var(--' + (anomaly.severity === 'high' ? 'danger' : 'warning') + ')">' + (anomaly.severity === 'high' ? '🔴' : '🟠') + ' ' + anomaly.anomaly_type + '</span><span class="alert-time">' + new Date(anomaly.timestamp).toLocaleString('zh-CN') + '</span></div><div class="alert-desc">' + anomaly.description + '</div><div style="margin-top:0.75rem;display:flex;gap:0.5rem;"><button class="btn btn-primary btn-sm" onclick="aiProcessAnomaly(' + anomaly.id + ')">🤖 自动响应</button><button class="btn btn-secondary btn-sm" onclick="alert(\'详情：' + JSON.stringify(anomaly.context).replace(/'/g, "\\'") + '\')">📝 详情</button></div></div>').join('');
+      } catch (error) {
+        document.getElementById('ai-anomaly-list').innerHTML = '<div style="text-align:center;padding:1rem;color:var(--text-muted);">无法连接服务器</div>';
+      }
+    }
+
+    async function aiLoadProfile() {
+      const ip = document.getElementById('ai-profile-ip').value;
+      if (!ip) { alert('请输入实例 IP'); return; }
+      try {
+        const response = await authFetch('/api/ai/analyze/profile/' + ip);
+        const profile = await response.json();
+        const container = document.getElementById('ai-profile-data');
+        container.style.display = 'block';
+        container.innerHTML = '<div style="font-size:0.85rem;line-height:1.8;"><div><strong>平均操作/小时:</strong> ' + profile.avg_operations_per_hour.toFixed(1) + '</div><div><strong>平均 LLM 调用/天:</strong> ' + profile.avg_llm_calls_per_day + '</div><div><strong>活跃小时:</strong> ' + profile.active_hours.join(', ') + '点</div><div><strong>风险趋势:</strong> ' + (profile.risk_trend === 'increasing' ? '📈 上升' : profile.risk_trend === 'decreasing' ? '📉 下降' : '➡️ 稳定') + '</div><div><strong>最后更新:</strong> ' + new Date(profile.last_updated).toLocaleString('zh-CN') + '</div></div>';
+      } catch (error) {
+        document.getElementById('ai-profile-data').style.display = 'block';
+        document.getElementById('ai-profile-data').innerHTML = '<div style="color:var(--text-muted);text-align:center;">无法连接服务器</div>';
+      }
+    }
+
+    async function aiConfigureAction() {
+      const anomalyType = document.getElementById('ai-anomaly-type').value;
+      const action = document.getElementById('ai-response-action').value;
+      const threshold = parseInt(document.getElementById('ai-confidence-threshold').value) / 100;
+      try {
+        const response = await authFetch('/api/ai/respond/configure', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ anomaly_type: anomalyType, action, threshold })
+        });
+        const result = await response.json();
+        alert(result.success ? '✅ 自动响应已配置' : '⚠️ ' + result.message);
+      } catch (error) {
+        alert('⚠️ 无法连接服务器');
+      }
+    }
+
+    async function aiProcessAnomaly(anomalyId) {
+      try {
+        const response = await authFetch('/api/ai/respond/process?anomaly_id=' + anomalyId, { method: 'POST' });
+        const result = await response.json();
+        alert(result.success ? '✅ ' + result.message : '⚠️ ' + result.message);
+      } catch (error) {
+        alert('⚠️ 无法连接服务器');
+      }
+    }
+
+    // ==================== 报表导出 JS ====================
+    function expShowOptions() {
+      const type = document.getElementById('exp-type').value;
+      document.getElementById('exp-date-range').style.display = 'none';
+      document.getElementById('exp-report-period').style.display = 'none';
+      if (type === 'audit') {
+        document.getElementById('exp-date-range').style.display = 'block';
+      } else if (type === 'compliance' || type === 'full_report') {
+        document.getElementById('exp-report-period').style.display = 'block';
+      }
+    }
+
+    async function expExportData() {
+      const type = document.getElementById('exp-type').value;
+      const format = document.getElementById('exp-format').value;
+      const period = document.getElementById('exp-period-select').value;
+      let url = '';
+      let filename = '';
+      if (type === 'devices') {
+        url = '/api/export/devices?format=' + format;
+        filename = 'devices.' + format;
+      } else if (type === 'audit') {
+        const startDate = document.getElementById('exp-start-date').value;
+        const endDate = document.getElementById('exp-end-date').value;
+        url = '/api/export/audit-logs?format=' + format + '&start_date=' + startDate + '&end_date=' + endDate;
+        filename = 'audit-logs.' + format;
+      } else if (type === 'alerts') {
+        url = '/api/export/alerts?format=' + format;
+        filename = 'alerts.' + format;
+      } else if (type === 'compliance') {
+        url = '/api/report/compliance?period=' + period + '&format=' + format;
+        filename = 'compliance-report.' + (format === 'pdf' ? 'pdf' : 'html');
+      } else if (type === 'full_report') {
+        url = '/api/report/full?format=pdf&period=' + period;
+        filename = 'security-report-' + period + '.pdf';
+      }
+      expAddHistory(type, format);
+      // 用隐藏 <a> 标签强制下载，避免浏览器直接预览 PDF
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function expAddHistory(type, format) {
+      const tbody = document.getElementById('exp-history');
+      const newRow = '<tr><td style="color:var(--text-muted);font-size:0.85rem;">' + new Date().toLocaleString('zh-CN') + '</td><td>' + expGetTypeName(type) + '</td><td><span class="badge badge-blue">' + format.toUpperCase() + '</span></td><td>✅ 已下载</td></tr>';
+      tbody.innerHTML = newRow + tbody.innerHTML;
+    }
+
+    function expGetTypeName(type) {
+      const names = { 'devices': '实例列表', 'audit': '审计日志', 'alerts': '告警列表', 'compliance': '合规报告', 'full_report': '完整安全报告' };
+      return names[type] || type;
+    }
+
+    async function expLoadDashboardData() {
+      try {
+        const response = await authFetch('/api/report/dashboard');
+        const data = await response.json();
+        const s = data.stats || {};
+        const a = data.audit_summary || {};
+        document.getElementById('exp-total-devices').textContent = s.total_devices ?? '-';
+        document.getElementById('exp-total-audit').textContent = (a.total_operations ?? '-').toLocaleString();
+        document.getElementById('exp-total-alerts').textContent = s.total_alerts ?? '-';
+        document.getElementById('exp-resolved-alerts').textContent = s.resolved_alerts ?? '-';
+      } catch (error) {
+        document.getElementById('exp-total-devices').textContent = '-';
+        document.getElementById('exp-total-audit').textContent = '-';
+        document.getElementById('exp-total-alerts').textContent = '-';
+        document.getElementById('exp-resolved-alerts').textContent = '-';
+      }
+    }
+
+    // ==================== 页面初始化 ====================
+    document.addEventListener('DOMContentLoaded', function() {
+      // 流量分析
+      trafficLoadStats();
+      trafficLoadAlerts();
+      trafficLoadDevices();
+      trafficLoadRecent();
+      trafficLoadTimeline();
+      setInterval(() => { trafficLoadStats(); trafficLoadAlerts(); trafficLoadDevices(); }, 30000);
+
+      // AI 辅助
+      aiLoadStatistics();
+      aiLoadRiskScores();
+      aiLoadAnomalies();
+      setInterval(() => { aiLoadStatistics(); aiLoadRiskScores(); aiLoadAnomalies(); }, 10000);
+
+      // 报表导出
+      expLoadDashboardData();
+    });
+  </script>
+</body>
+</html>

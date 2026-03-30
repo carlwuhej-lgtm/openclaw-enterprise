@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head><title>审计日志测试</title></head>
+<body>
+<h1>审计日志 API 测试</h1>
+<div id="result"></div>
+<script>
+const token = localStorage.getItem('access_token');
+document.getElementById('result').innerHTML = '<pre>Token: ' + (token ? token.substring(0, 30) + '...' : '无') + '</pre>';
+
+fetch('/api/audit-logs?page=1&page_size=5', {
+  headers: {
+    'Authorization': 'Bearer ' + token,
+    'Content-Type': 'application/json'
+  }
+})
+.then(r => {
+  console.log('状态码:', r.status);
+  return r.json();
+})
+.then(d => {
+  document.getElementById('result').innerHTML += '<pre>' + JSON.stringify(d, null, 2) + '</pre>';
+})
+.catch(e => {
+  document.getElementById('result').innerHTML += '<pre style="color:red">错误：' + e + '</pre>';
+});
+</script>
+</body>
+</html>

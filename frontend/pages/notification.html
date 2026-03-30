@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>通知配置 - OpenClaw Enterprise</title>
+  <link rel="stylesheet" href="/css/style.css?v=10">
+  <style>
+    .toast-msg {
+      position: fixed; top: 1.5rem; right: 1.5rem; z-index: 2000;
+      padding: 0.875rem 1.5rem; border-radius: 10px;
+      color: #fff; font-weight: 600; font-size: 0.9rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      animation: toastIn 0.3s ease-out;
+      transition: opacity 0.3s;
+    }
+    .toast-msg.success { background: rgba(16,185,129,0.95); }
+    .toast-msg.error { background: rgba(239,68,68,0.95); }
+    @keyframes toastIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+
+    .form-input-nw {
+      width: 100%; padding: 0.75rem;
+      background: var(--dark-bg); border: 1px solid var(--dark-border);
+      border-radius: 8px; color: var(--text-primary);
+      font-size: 0.9rem; outline: none; transition: border-color 0.2s;
+    }
+    .form-input-nw:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1); }
+    .form-label-nw { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.85rem; color: var(--text-secondary); }
+
+    .config-status {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;
+    }
+    .config-status.saved { background: rgba(16,185,129,0.1); color: var(--success); }
+    .config-status.unsaved { background: rgba(234,179,8,0.1); color: var(--warning); }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-brand">
+        <div class="logo-icon">🐱</div>
+        <div class="logo-text"><h1>OpenClaw</h1><p>Enterprise</p></div>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">总览</div>
+      <ul class="nav-menu"><li><a href="/pages/dashboard"><span class="nav-icon">📊</span> 控制台</a></li></ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">资产管理</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/devices"><span class="nav-icon">💻</span> 实例管理</a></li>
+        <li><a href="/pages/agents"><span class="nav-icon">🤖</span> Agent 管理</a></li>
+        <li><a href="/pages/tenants"><span class="nav-icon">🏢</span> 租户管理</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">安全管控</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/policies"><span class="nav-icon">🛡️</span> 安全管控</a></li>
+        <li><a href="/pages/scanner"><span class="nav-icon">🔍</span> 网络扫描</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">监控审计</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/alerts"><span class="nav-icon">🚨</span> 告警中心</a></li>
+        <li><a href="/pages/audit"><span class="nav-icon">📋</span> 审计日志</a></li>
+        <li><a href="/pages/syslog"><span class="nav-icon">📜</span> 日志中心</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">分析报告</div>
+      <ul class="nav-menu"><li><a href="/pages/analytics"><span class="nav-icon">📊</span> 分析中心</a></li></ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">系统工具</div>
+      <ul class="nav-menu"><li><a href="/pages/clinic" class="active"><span class="nav-icon">🏥</span> 急救室</a></li>
+        <li><a href="/pages/notification" class="active"><span class="nav-icon">🔔</span> 通知配置</a></li></ul>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="topbar">
+      <div class="breadcrumb">
+        <div class="breadcrumb-item"><span>🏠</span><span>首页</span></div>
+        <span class="breadcrumb-separator">/</span>
+        <div class="breadcrumb-item">通知配置</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn">🔔</button>
+        <div class="user-menu">
+          <div class="user-avatar">S</div>
+          <div class="user-info">
+            <span class="user-name">丝可乐</span>
+            <span class="user-role">安全管理员</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-header">
+        <h1 class="page-title">📢 通知配置</h1>
+        <p class="page-subtitle">配置告警通知渠道，支持飞书、邮件、短信、Webhook</p>
+      </div>
+
+      <div class="content-grid">
+        <div class="left-column">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">➕ 添加/编辑通知渠道</div>
+            </div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:1rem;">
+                <div>
+                  <label class="form-label-nw">渠道类型</label>
+                  <select id="channel-type" class="tenant-select" style="width:100%;padding:0.75rem;" onchange="showChannelConfig()">
+                    <option value="">请选择...</option>
+                    <option value="feishu">📱 飞书机器人</option>
+                    <option value="email">📧 邮件通知</option>
+                    <option value="sms">📱 短信通知</option>
+                    <option value="webhook">🔗 Webhook</option>
+                  </select>
+                </div>
+
+                <div id="channel-config" style="display:none;">
+                  <!-- 飞书 -->
+                  <div id="feishu-config" style="display:none;">
+                    <div style="display:flex;flex-direction:column;gap:1rem;">
+                      <div>
+                        <label class="form-label-nw">飞书 Webhook URL</label>
+                        <input type="text" id="feishu-webhook" class="form-input-nw" placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/...">
+                      </div>
+                      <div>
+                        <label class="form-label-nw">签名密钥（可选）</label>
+                        <input type="text" id="feishu-secret" class="form-input-nw" placeholder="SEC...">
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 邮件 -->
+                  <div id="email-config" style="display:none;">
+                    <div style="display:flex;flex-direction:column;gap:1rem;">
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                        <div>
+                          <label class="form-label-nw">SMTP 服务器</label>
+                          <input type="text" id="email-smtp" class="form-input-nw" placeholder="smtp.example.com">
+                        </div>
+                        <div>
+                          <label class="form-label-nw">端口</label>
+                          <input type="number" id="email-port" value="465" class="form-input-nw">
+                        </div>
+                      </div>
+                      <div>
+                        <label class="form-label-nw">发件人邮箱</label>
+                        <input type="email" id="email-from" class="form-input-nw" placeholder="alert@example.com">
+                      </div>
+                      <div>
+                        <label class="form-label-nw">邮箱密码/授权码</label>
+                        <input type="password" id="email-password" class="form-input-nw">
+                      </div>
+                      <div>
+                        <label class="form-label-nw">测试邮箱</label>
+                        <input type="email" id="email-test" class="form-input-nw" placeholder="admin@example.com">
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 短信 -->
+                  <div id="sms-config" style="display:none;">
+                    <div style="display:flex;flex-direction:column;gap:1rem;">
+                      <div>
+                        <label class="form-label-nw">短信提供商</label>
+                        <select id="sms-provider" class="tenant-select" style="width:100%;padding:0.75rem;">
+                          <option value="aliyun">阿里云短信</option>
+                          <option value="tencent">腾讯云短信</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="form-label-nw">Access Key</label>
+                        <input type="text" id="sms-access-key" class="form-input-nw">
+                      </div>
+                      <div>
+                        <label class="form-label-nw">Secret Key</label>
+                        <input type="password" id="sms-secret-key" class="form-input-nw">
+                      </div>
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                        <div>
+                          <label class="form-label-nw">签名</label>
+                          <input type="text" id="sms-sign" class="form-input-nw" placeholder="OpenClaw">
+                        </div>
+                        <div>
+                          <label class="form-label-nw">模板 CODE</label>
+                          <input type="text" id="sms-template" class="form-input-nw" placeholder="SMS_123456789">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Webhook -->
+                  <div id="webhook-config" style="display:none;">
+                    <div style="display:flex;flex-direction:column;gap:1rem;">
+                      <div>
+                        <label class="form-label-nw">Webhook URL</label>
+                        <input type="url" id="webhook-url" class="form-input-nw" placeholder="https://example.com/webhook">
+                      </div>
+                      <div>
+                        <label class="form-label-nw">请求方法</label>
+                        <select id="webhook-method" class="tenant-select" style="width:100%;padding:0.75rem;">
+                          <option value="POST">POST</option>
+                          <option value="PUT">PUT</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="display:flex;gap:1rem;margin-top:1rem;">
+                    <button class="btn btn-primary" onclick="saveConfig()" style="flex:1;justify-content:center;">💾 保存配置</button>
+                    <button class="btn btn-secondary" onclick="testConfig()" style="flex:1;justify-content:center;">🧪 测试</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Saved configs list -->
+          <div class="card" style="margin-top:1.5rem;">
+            <div class="card-header">
+              <div class="card-title">📋 已保存的配置</div>
+              <button class="btn btn-secondary btn-sm" onclick="loadSavedConfigs()">🔄 刷新</button>
+            </div>
+            <div class="card-body" style="padding:0;">
+              <div class="table-container">
+                <table>
+                  <thead><tr><th>渠道</th><th>名称</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead>
+                  <tbody id="config-list">
+                    <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">加载中...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="right-column">
+          <div class="card">
+            <div class="card-header"><div class="card-title">📊 通知统计</div></div>
+            <div class="card-body">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div style="padding:1rem;background:rgba(16,185,129,0.1);border-radius:8px;border-left:3px solid var(--success);">
+                  <div style="font-size:2rem;font-weight:700;color:var(--success)" id="stat-success">0</div>
+                  <div style="color:var(--text-secondary);font-size:0.85rem;">发送成功</div>
+                </div>
+                <div style="padding:1rem;background:rgba(239,68,68,0.1);border-radius:8px;border-left:3px solid var(--danger);">
+                  <div style="font-size:2rem;font-weight:700;color:var(--danger)" id="stat-failed">0</div>
+                  <div style="color:var(--text-secondary);font-size:0.85rem;">发送失败</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:1.5rem;">
+            <div class="card-header"><div class="card-title">📝 通知日志</div></div>
+            <div class="card-body" style="padding:0;max-height:400px;overflow-y:auto;">
+              <table>
+                <thead><tr><th>时间</th><th>渠道</th><th>状态</th></tr></thead>
+                <tbody id="notification-log">
+                  <tr><td colspan="3" style="text-align:center;padding:1rem;color:var(--text-muted);">暂无日志</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:1.5rem;">
+            <div class="card-header"><div class="card-title">ℹ️ 配置说明</div></div>
+            <div class="card-body">
+              <div style="color:var(--text-secondary);line-height:1.8;font-size:0.9rem;">
+                <p style="margin-bottom:0.75rem;"><strong>📱 飞书机器人</strong><br>在飞书群添加机器人，获取 Webhook URL</p>
+                <p style="margin-bottom:0.75rem;"><strong>📧 邮件通知</strong><br>支持 SMTP 协议，需开启 SMTP 服务</p>
+                <p style="margin-bottom:0.75rem;"><strong>📱 短信通知</strong><br>支持阿里云/腾讯云短信服务</p>
+                <p style="margin-bottom:0.75rem;"><strong>🔗 Webhook</strong><br>自定义 HTTP 回调，支持任意系统</p>
+                <p><strong>⚠️ 注意事项</strong><br>敏感信息（密码、密钥）会加密存储</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/auth.js"></script>
+  <script>AUTH.requireAuth();</script>
+  <script src="/js/app.js?v=4"></script>
+  <script>
+    const NF_API = window.location.origin + '/api/notification';
+
+    // ==================== Toast ====================
+    function showToast(msg, type = 'success') {
+      const existing = document.querySelector('.toast-msg');
+      if (existing) existing.remove();
+      const t = document.createElement('div');
+      t.className = `toast-msg ${type}`;
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+    }
+
+    // ==================== Channel config toggle ====================
+    function showChannelConfig() {
+      const channel = document.getElementById('channel-type').value;
+      document.getElementById('channel-config').style.display = channel ? 'block' : 'none';
+      ['feishu', 'email', 'sms', 'webhook'].forEach(type => {
+        document.getElementById(`${type}-config`).style.display = 'none';
+      });
+      if (channel) {
+        document.getElementById(`${channel}-config`).style.display = 'block';
+      }
+    }
+
+    // ==================== Collect config from form ====================
+    function collectConfig() {
+      const channel = document.getElementById('channel-type').value;
+      if (!channel) return null;
+
+      let config = {};
+      if (channel === 'feishu') {
+        config = {
+          webhook_url: document.getElementById('feishu-webhook').value,
+          secret: document.getElementById('feishu-secret').value
+        };
+        if (!config.webhook_url) { showToast('请填写飞书 Webhook URL', 'error'); return null; }
+      } else if (channel === 'email') {
+        config = {
+          smtp_server: document.getElementById('email-smtp').value,
+          smtp_port: parseInt(document.getElementById('email-port').value) || 465,
+          username: document.getElementById('email-from').value,
+          password: document.getElementById('email-password').value,
+          from_email: document.getElementById('email-from').value,
+          test_email: document.getElementById('email-test').value
+        };
+        if (!config.smtp_server) { showToast('请填写 SMTP 服务器', 'error'); return null; }
+      } else if (channel === 'sms') {
+        config = {
+          provider: document.getElementById('sms-provider').value,
+          access_key: document.getElementById('sms-access-key').value,
+          secret_key: document.getElementById('sms-secret-key').value,
+          sign_name: document.getElementById('sms-sign').value,
+          template_code: document.getElementById('sms-template').value
+        };
+      } else if (channel === 'webhook') {
+        config = {
+          url: document.getElementById('webhook-url').value,
+          method: document.getElementById('webhook-method').value
+        };
+        if (!config.url) { showToast('请填写 Webhook URL', 'error'); return null; }
+      }
+
+      return { channel, config };
+    }
+
+    // ==================== Save config ====================
+    async function saveConfig() {
+      const data = collectConfig();
+      if (!data) return;
+
+      try {
+        const channelNames = { feishu: '飞书通知', email: '邮件通知', sms: '短信通知', webhook: 'Webhook 通知' };
+        const resp = await authFetch(`${NF_API}/config`, {
+          method: 'POST',
+          body: JSON.stringify({
+            channel: data.channel,
+            name: channelNames[data.channel] || data.channel,
+            is_enabled: true,
+            config: data.config
+          })
+        });
+        const result = await resp.json();
+        if (result.success) {
+          showToast('✅ ' + result.message);
+          loadSavedConfigs();
+        } else {
+          showToast('❌ ' + (result.message || '保存失败'), 'error');
+        }
+      } catch (error) {
+        showToast('❌ 保存失败，请检查服务器连接', 'error');
+      }
+    }
+
+    // ==================== Test config ====================
+    async function testConfig() {
+      const data = collectConfig();
+      if (!data) return;
+
+      showToast('🧪 正在测试...');
+      try {
+        const resp = await authFetch(`${NF_API}/test`, {
+          method: 'POST',
+          body: JSON.stringify({
+            channel: data.channel,
+            config: data.config
+          })
+        });
+        const result = await resp.json();
+        if (result.success) {
+          showToast('✅ ' + result.message);
+        } else {
+          showToast('❌ ' + (result.message || '测试失败'), 'error');
+        }
+        loadStats();
+        loadLog();
+      } catch (error) {
+        showToast('❌ 无法连接服务器', 'error');
+      }
+    }
+
+    // ==================== Load saved configs ====================
+    async function loadSavedConfigs() {
+      try {
+        const resp = await authFetch(`${NF_API}/config`);
+        const data = await resp.json();
+        const channels = data.channels || {};
+        const tbody = document.getElementById('config-list');
+
+        const entries = Object.values(channels);
+        if (entries.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">暂无已保存配置</td></tr>';
+          return;
+        }
+
+        const channelIcons = { feishu: '📱', email: '📧', sms: '📱', webhook: '🔗' };
+        tbody.innerHTML = entries.map(c => `
+          <tr>
+            <td>${channelIcons[c.channel] || '📌'} ${(c.channel || '').toUpperCase()}</td>
+            <td>${c.name || '-'}</td>
+            <td>${c.is_enabled
+              ? '<span style="color:var(--success);font-size:0.82rem;">● 启用</span>'
+              : '<span style="color:var(--text-muted);font-size:0.82rem;">● 禁用</span>'}</td>
+            <td style="font-size:0.82rem;color:var(--text-muted);font-family:var(--font-mono);">${c.updated_at ? new Date(c.updated_at).toLocaleString('zh-CN') : '-'}</td>
+            <td><button class="btn btn-secondary btn-sm" onclick="editChannel('${c.channel}')">编辑</button></td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        document.getElementById('config-list').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">⚠️ 无法加载配置</td></tr>';
+      }
+    }
+
+    // ==================== Edit channel (load into form) ====================
+    async function editChannel(channel) {
+      try {
+        const resp = await authFetch(`${NF_API}/config`);
+        const data = await resp.json();
+        const cfg = (data.channels || {})[channel];
+        if (!cfg) return;
+
+        document.getElementById('channel-type').value = channel;
+        showChannelConfig();
+
+        const c = cfg.config || {};
+        if (channel === 'feishu') {
+          document.getElementById('feishu-webhook').value = c.webhook_url || '';
+          document.getElementById('feishu-secret').value = c.secret || '';
+        } else if (channel === 'email') {
+          document.getElementById('email-smtp').value = c.smtp_server || '';
+          document.getElementById('email-port').value = c.smtp_port || 465;
+          document.getElementById('email-from').value = c.from_email || c.username || '';
+          document.getElementById('email-password').value = c.password || '';
+          document.getElementById('email-test').value = c.test_email || '';
+        } else if (channel === 'sms') {
+          document.getElementById('sms-provider').value = c.provider || 'aliyun';
+          document.getElementById('sms-access-key').value = c.access_key || '';
+          document.getElementById('sms-secret-key').value = c.secret_key || '';
+          document.getElementById('sms-sign').value = c.sign_name || '';
+          document.getElementById('sms-template').value = c.template_code || '';
+        } else if (channel === 'webhook') {
+          document.getElementById('webhook-url').value = c.url || '';
+          document.getElementById('webhook-method').value = c.method || 'POST';
+        }
+
+        showToast('已加载 ' + channel + ' 配置，修改后点击保存');
+      } catch (e) {
+        showToast('加载配置失败', 'error');
+      }
+    }
+
+    // ==================== Stats & Log ====================
+    async function loadStats() {
+      try {
+        const resp = await authFetch(`${NF_API}/stats`);
+        const stats = await resp.json();
+        document.getElementById('stat-success').textContent = stats.success || 0;
+        document.getElementById('stat-failed').textContent = stats.failed || 0;
+      } catch (e) {
+        document.getElementById('stat-success').textContent = '-';
+        document.getElementById('stat-failed').textContent = '-';
+      }
+    }
+
+    async function loadLog() {
+      try {
+        const resp = await authFetch(`${NF_API}/log?limit=20`);
+        const log = await resp.json();
+        const tbody = document.getElementById('notification-log');
+        if (!log || log.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:1rem;color:var(--text-muted);">暂无日志</td></tr>';
+          return;
+        }
+        tbody.innerHTML = log.slice().reverse().map(item => `
+          <tr>
+            <td style="color:var(--text-muted);font-size:0.82rem;font-family:var(--font-mono);">${item.timestamp ? new Date(item.timestamp).toLocaleString('zh-CN') : '-'}</td>
+            <td><span style="font-family:var(--font-mono);font-size:0.78rem;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.15);padding:2px 8px;border-radius:4px;color:var(--primary);">${item.channel || '-'}</span></td>
+            <td>${item.success
+              ? '<span style="color:var(--success);font-size:0.82rem;">✅ 成功</span>'
+              : '<span style="color:var(--danger);font-size:0.82rem;">❌ 失败</span>'}</td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        document.getElementById('notification-log').innerHTML = '<tr><td colspan="3" style="text-align:center;padding:1rem;color:var(--text-muted);">⚠️ 无法连接</td></tr>';
+      }
+    }
+
+    // ==================== Init ====================
+    document.addEventListener('DOMContentLoaded', function() {
+      loadSavedConfigs();
+      loadStats();
+      loadLog();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>主机监控 - OpenClaw Enterprise</title>
+  <link rel="stylesheet" href="/css/style.css?v=10">
+  <link rel="stylesheet" href="/css/responsive.css?v=10">
+  <style>
+    /* 主机监控页面专用样式 */
+
+    /* 加载动画 */
+    .loading-spinner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+      gap: 1rem;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--dark-border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* 错误提示 */
+    .error-banner {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--danger);
+      font-size: 0.9rem;
+    }
+
+    .error-banner.visible {
+      display: flex;
+    }
+
+    .error-banner .error-icon {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .error-banner .error-dismiss {
+      margin-left: auto;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+      flex-shrink: 0;
+    }
+
+    .error-banner .error-dismiss:hover {
+      opacity: 1;
+    }
+
+    /* 状态圆点 */
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .status-dot.online {
+      background: var(--success);
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+    }
+
+    .status-dot.offline {
+      background: var(--text-muted);
+    }
+
+    .status-dot.warning {
+      background: var(--warning);
+      box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+    }
+
+    .status-dot.running {
+      background: var(--success);
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Agent 表格状态列 */
+    .agent-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* 模型分组 */
+    .model-provider-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .model-provider-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .provider-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+    }
+
+    .provider-header .provider-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: rgba(99, 102, 241, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+    }
+
+    .model-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.625rem 0;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+    }
+
+    .model-item:last-child {
+      border-bottom: none;
+    }
+
+    .model-name {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .model-tags {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    .model-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .model-tag.reasoning {
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--primary);
+    }
+
+    .model-tag.context {
+      background: rgba(14, 165, 233, 0.15);
+      color: var(--secondary);
+    }
+
+    /* Gateway 详情区域 */
+    .gateway-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .gateway-detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+    }
+
+    .gateway-detail-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    .gateway-detail-value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .gateway-detail-value.mono {
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 0.9rem;
+    }
+
+    /* 中间内容网格 - 左右布局 */
+    .middle-grid {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 1024px) {
+      .middle-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* 刷新倒计时指示器 */
+    .refresh-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .refresh-indicator .refresh-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .refresh-indicator.refreshing .refresh-dot {
+      animation: pulse-dot 0.5s ease-in-out infinite;
+    }
+
+    /* 上次更新时间 */
+    .last-updated {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- 侧边栏 -->
+    <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-brand">
+        <div class="logo-icon">🐱</div>
+        <div class="logo-text">
+          <h1>OpenClaw</h1>
+          <p>Enterprise</p>
+        </div>
+      </div>
+    </div>
+        <div class="nav-section">
+      <div class="nav-section-title">总览</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/dashboard" ><span class="nav-icon">📊</span> 控制台</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">资产管理</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/devices" ><span class="nav-icon">💻</span> 实例管理</a></li>
+        <li><a href="/pages/agents" ><span class="nav-icon">🤖</span> Agent 管理</a></li>
+        <li><a href="/pages/tenants" ><span class="nav-icon">🏢</span> 租户管理</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">安全管控</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/policies" ><span class="nav-icon">🛡️</span> 安全管控</a></li>
+        <li><a href="/pages/scanner" ><span class="nav-icon">🔍</span> 网络扫描</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">监控审计</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/alerts" ><span class="nav-icon">🚨</span> 告警中心</a></li>
+        <li><a href="/pages/audit" ><span class="nav-icon">📋</span> 审计日志</a></li>
+        <li><a href="/pages/syslog"><span class="nav-icon">📜</span> 日志中心</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">分析报告</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/analytics" ><span class="nav-icon">📊</span> 分析中心</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">系统工具</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/clinic" class="active"><span class="nav-icon">🏥</span> 急救室</a></li>
+        <li><a href="/pages/notification" ><span class="nav-icon">🔔</span> 通知配置</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- 主内容区 -->
+  <main class="main-content">
+    <!-- 顶部栏 -->
+    <div class="topbar">
+      <div class="breadcrumb">
+        <div class="breadcrumb-item"><span>🏠</span><span>首页</span></div>
+        <span class="breadcrumb-separator">/</span>
+        <div class="breadcrumb-item">安全管理</div>
+        <span class="breadcrumb-separator">/</span>
+        <div class="breadcrumb-item">主机监控</div>
+      </div>
+      
+      <div class="topbar-actions">
+        <div class="refresh-indicator" id="refresh-indicator">
+          <span class="refresh-dot"></span>
+          <span id="refresh-countdown">30s 后刷新</span>
+        </div>
+        <div class="search-box">
+          <span style="margin-right: 0.5rem;">🔍</span>
+          <input type="text" placeholder="搜索 Agent、模型...">
+        </div>
+        <button class="icon-btn" onclick="refreshData()" title="立即刷新">🔄</button>
+        <div class="user-menu">
+          <div class="user-avatar">S</div>
+          <div class="user-info">
+            <span class="user-name">丝可乐</span>
+            <span class="user-role">安全管理员</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 内容区 -->
+    <div class="content">
+      <div class="page-header">
+        <h1 class="page-title">🖥️ 主机监控</h1>
+        <p class="page-subtitle">OpenClaw 本机运行状态 · Gateway · Agent · 系统资源</p>
+      </div>
+
+      <!-- 错误提示 -->
+      <div class="error-banner" id="error-banner">
+        <span class="error-icon">⚠️</span>
+        <span id="error-message">无法连接到主机 API，请检查 Gateway 是否正常运行。</span>
+        <span class="error-dismiss" onclick="dismissError()">✕</span>
+      </div>
+
+      <!-- 统计卡片 -->
+      <div class="stats-grid" id="stats-container">
+        <div class="stat-card">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-version">-</div>
+              <div class="stat-label">OpenClaw 版本</div>
+            </div>
+            <div class="stat-icon">🐱</div>
+          </div>
+          <span class="stat-trend up" id="stat-uptime">运行时长加载中...</span>
+        </div>
+        
+        <div class="stat-card success">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-gateway-status">-</div>
+              <div class="stat-label">Gateway 状态</div>
+            </div>
+            <div class="stat-icon">⚡</div>
+          </div>
+          <span class="stat-trend" id="stat-gateway-detail">PID - · CPU -% · 内存 -%</span>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-agents">-</div>
+              <div class="stat-label">Agent 状态</div>
+            </div>
+            <div class="stat-icon">🤖</div>
+          </div>
+          <span class="stat-trend" id="stat-agents-detail">在线/总数</span>
+        </div>
+        
+        <div class="stat-card warning">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-system">-</div>
+              <div class="stat-label">系统资源</div>
+            </div>
+            <div class="stat-icon">📊</div>
+          </div>
+          <span class="stat-trend" id="stat-system-detail">CPU · 内存 · 磁盘</span>
+        </div>
+      </div>
+
+      <!-- 中间区域：Agent 列表 + 模型配置 -->
+      <div class="middle-grid">
+        <!-- 左：Agent 列表 -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🤖 Agent 列表</div>
+            <div class="last-updated">
+              <span>🕐</span>
+              <span id="agents-updated">--</span>
+            </div>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            <div id="agents-loading" class="loading-spinner">
+              <div class="spinner"></div>
+              <span class="loading-text">加载 Agent 数据...</span>
+            </div>
+            <div class="table-container" id="agents-table-container" style="display: none;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>名称</th>
+                    <th>ID</th>
+                    <th>模型</th>
+                    <th>工作目录</th>
+                    <th>状态</th>
+                  </tr>
+                </thead>
+                <tbody id="agents-table">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右：模型配置 -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🧠 模型配置</div>
+            <div class="last-updated">
+              <span>🕐</span>
+              <span id="models-updated">--</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="models-loading" class="loading-spinner">
+              <div class="spinner"></div>
+              <span class="loading-text">加载模型配置...</span>
+            </div>
+            <div id="models-content" style="display: none;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部：Gateway 详情 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⚡ Gateway 详情</div>
+          <div class="last-updated">
+            <span>🕐</span>
+            <span id="gateway-updated">--</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="gateway-loading" class="loading-spinner">
+            <div class="spinner"></div>
+            <span class="loading-text">加载 Gateway 信息...</span>
+          </div>
+          <div class="gateway-grid" id="gateway-content" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ====== 工具函数 ======
+
+    /**
+     * 将秒数格式化为人性化时长（如 "3天5小时12分"）
+     */
+    function humanDuration(seconds) {
+      if (!seconds || seconds < 0) return '-';
+      const s = Math.floor(seconds);
+      const d = Math.floor(s / 86400);
+      const h = Math.floor((s % 86400) / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const sec = s % 60;
+      const parts = [];
+      if (d > 0) parts.push(d + '天');
+      if (h > 0) parts.push(h + '小时');
+      if (m > 0) parts.push(m + '分');
+      if (parts.length === 0) parts.push(sec + '秒');
+      return parts.join('');
+    }
+
+    /**
+     * 格式化时间戳为本地时间字符串
+     */
+    function formatTime(ts) {
+      if (!ts) return '-';
+      const d = new Date(typeof ts === 'number' ? (ts < 1e12 ? ts * 1000 : ts) : ts);
+      if (isNaN(d.getTime())) return '-';
+      return d.toLocaleString('zh-CN', { hour12: false });
+    }
+
+    /**
+     * 格式化字节为人性化单位
+     */
+    function formatBytes(bytes) {
+      if (bytes == null || isNaN(bytes)) return '-';
+      if (bytes === 0) return '0 B';
+      const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(1024));
+      return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + units[i];
+    }
+
+    /**
+     * 缩短路径显示
+     */
+    function shortenPath(p) {
+      if (!p) return '-';
+      const home = '/Users/';
+      if (p.startsWith(home)) {
+        const rest = p.slice(home.length);
+        return '~/' + rest.split('/').slice(1).join('/');
+      }
+      return p;
+    }
+
+    /**
+     * 当前时间字符串
+     */
+    function nowTimeStr() {
+      return new Date().toLocaleTimeString('zh-CN', { hour12: false });
+    }
+
+    // ====== API 调用 ======
+
+    const API_BASE = '';
+
+    async function fetchJSON(url) {
+      const resp = await fetch(API_BASE + url);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      return resp.json();
+    }
+
+    // ====== 渲染函数 ======
+
+    /**
+     * 渲染统计卡片
+     */
+    function renderStats(data) {
+      // 版本 + 运行时长
+      const version = data.version || data.gateway?.version || data.openclaw_version?.version || '-';
+      document.getElementById('stat-version').textContent = version;
+
+      const uptime = data.gateway?.uptime ?? data.uptime;
+      document.getElementById('stat-uptime').textContent = '⏱️ 运行 ' + humanDuration(uptime);
+
+      // Gateway 状态
+      const gw = data.gateway || {};
+      const proc = gw.processes && gw.processes.length > 0 ? gw.processes[0] : null;
+      const gwRunning = gw.running || gw.process_count > 0 || (proc && proc.pid);
+      document.getElementById('stat-gateway-status').textContent = gwRunning ? '运行中' : '已停止';
+      const gwCard = document.getElementById('stat-gateway-status').closest('.stat-card');
+      if (gwRunning) {
+        gwCard.className = 'stat-card success';
+      } else {
+        gwCard.className = 'stat-card danger';
+      }
+      const cpu = proc && proc.cpu_percent != null ? proc.cpu_percent.toFixed(1) : (gw.cpu != null ? gw.cpu.toFixed(1) : '-');
+      const mem = proc && proc.mem_percent != null ? proc.mem_percent.toFixed(1) : (gw.memory != null ? gw.memory.toFixed(1) : (gw.memPercent != null ? gw.memPercent.toFixed(1) : '-'));
+      const pid = proc && proc.pid ? proc.pid : (gw.pid || '-');
+      document.getElementById('stat-gateway-detail').textContent =
+        'PID ' + pid + ' · CPU ' + cpu + '% · 内存 ' + mem + '%';
+
+      // Agent 状态
+      const agents = data.agents || [];
+      const total = agents.length;
+      const online = agents.filter(a => a.status === 'online' || a.status === 'running' || a.connected).length;
+      document.getElementById('stat-agents').textContent = online + '/' + total;
+      document.getElementById('stat-agents-detail').textContent = online + ' 在线 / ' + total + ' 总数';
+
+      // 系统资源
+      const sys = data.system || {};
+      const cpuCores = sys.cpu_cores || sys.cpus || sys.cpuCount || sys.cores || '-';
+      const disk = sys.disk || {};
+      const diskStr = disk.size ? (disk.used + ' / ' + disk.available + ' (' + disk.use_percent + ')') : '-';
+      document.getElementById('stat-system').textContent = cpuCores + ' 核';
+      document.getElementById('stat-system-detail').textContent =
+        'CPU ' + cpuCores + ' 核 · 磁盘 ' + diskStr;
+    }
+
+    /**
+     * 渲染 Agent 列表
+     */
+    function renderAgents(agents) {
+      const loading = document.getElementById('agents-loading');
+      const container = document.getElementById('agents-table-container');
+      const tbody = document.getElementById('agents-table');
+
+      if (!agents || agents.length === 0) {
+        loading.style.display = 'none';
+        container.style.display = 'block';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">暂无 Agent 数据</td></tr>';
+        return;
+      }
+
+      let html = '';
+      agents.forEach(agent => {
+        const name = agent.name || agent.id || '-';
+        const id = agent.id || '-';
+        const model = agent.model || agent.defaultModel || '-';
+        const workdir = shortenPath(agent.workdir || agent.cwd || agent.workspace || '');
+        const status = agent.status || (agent.connected ? 'online' : 'offline');
+        const isOnline = status === 'online' || status === 'running';
+        const dotClass = isOnline ? 'online' : 'offline';
+        const statusLabel = isOnline ? '在线' : '离线';
+
+        html += '<tr>' +
+          '<td><strong>' + escapeHtml(name) + '</strong></td>' +
+          '<td><code style="font-size:0.8rem;color:var(--text-muted);">' + escapeHtml(id) + '</code></td>' +
+          '<td><span class="badge badge-blue">' + escapeHtml(model) + '</span></td>' +
+          '<td style="font-size:0.85rem;color:var(--text-secondary);" title="' + escapeHtml(agent.workdir || agent.cwd || agent.workspace || '') + '">' + escapeHtml(workdir) + '</td>' +
+          '<td><div class="agent-status"><span class="status-dot ' + dotClass + '"></span> ' + statusLabel + '</div></td>' +
+          '</tr>';
+      });
+
+      loading.style.display = 'none';
+      container.style.display = 'block';
+      tbody.innerHTML = html;
+      document.getElementById('agents-updated').textContent = nowTimeStr();
+    }
+
+    /**
+     * 渲染模型配置（按 Provider 分组）
+     */
+    function renderModels(models) {
+      const loading = document.getElementById('models-loading');
+      const content = document.getElementById('models-content');
+
+      // API 返回格式：{ default_model, providers: [], provider_count, models_in_use }
+      // 需要转换成按 provider 分组的格式
+      let providerGroups = {};
+      
+      if (models && models.providers && Array.isArray(models.providers)) {
+        models.providers.forEach(p => {
+          const providerName = p.id || p.name || 'unknown';
+          const modelList = p.models || [];
+          if (modelList.length > 0) {
+            providerGroups[providerName] = modelList.map(m => ({
+              id: m.id,
+              name: m.name,
+              reasoning: m.reasoning || false,
+              contextWindow: m.contextWindow || m.maxTokens || null
+            }));
+          }
+        });
+      }
+
+      if (!models || Object.keys(providerGroups).length === 0) {
+        loading.style.display = 'none';
+        content.style.display = 'block';
+        content.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--text-muted);">暂无模型配置</div>';
+        return;
+      }
+
+      // 使用转换后的分组数据
+      const groups = providerGroups;
+
+      let html = '';
+      Object.entries(groups).forEach(([provider, modelList]) => {
+        const providerIcon = getProviderIcon(provider);
+        html += '<div class="model-provider-group">';
+        html += '<div class="provider-header"><div class="provider-icon">' + providerIcon + '</div>' + escapeHtml(provider) + ' (' + modelList.length + ')</div>';
+
+        modelList.forEach(m => {
+          const modelId = m.id || m.model || m.name || '-';
+          const isReasoning = m.reasoning || m.isReasoning || false;
+          const ctx = m.contextWindow || m.context || m.maxTokens || m.max_tokens || null;
+
+          html += '<div class="model-item">';
+          html += '<div class="model-name">' + escapeHtml(modelId) + '</div>';
+          html += '<div class="model-tags">';
+          if (isReasoning) {
+            html += '<span class="model-tag reasoning">🧠 Reasoning</span>';
+          }
+          if (ctx) {
+            html += '<span class="model-tag context">' + formatContext(ctx) + '</span>';
+          }
+          html += '</div>';
+          html += '</div>';
+        });
+
+        html += '</div>';
+      });
+
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      content.innerHTML = html;
+      document.getElementById('models-updated').textContent = nowTimeStr();
+    }
+
+    /**
+     * 渲染 Gateway 详情
+     */
+    function renderGateway(gw) {
+      const loading = document.getElementById('gateway-loading');
+      const content = document.getElementById('gateway-content');
+
+      // API 返回格式：{ running, process_count, processes: [{ pid, cpu_percent, mem_percent, rss_kb, start_time, elapsed, ... }] }
+      if (!gw || !gw.processes || gw.processes.length === 0) {
+        loading.style.display = 'none';
+        content.style.display = 'grid';
+        content.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--text-muted);grid-column:1/-1;">Gateway 未运行</div>';
+        return;
+      }
+
+      // 取第一个进程（主进程）
+      const proc = gw.processes[0];
+      const isRunning = gw.running || gw.process_count > 0;
+
+      const items = [
+        { label: 'PID', value: proc.pid || '-', mono: true },
+        { label: '启动时间', value: proc.start_time || '-' },
+        { label: '运行时长', value: proc.elapsed || '-' },
+        { label: 'CPU 使用率', value: proc.cpu_percent != null ? proc.cpu_percent.toFixed(1) + '%' : '-' },
+        { label: '内存使用率', value: proc.mem_percent != null ? proc.mem_percent.toFixed(1) + '%' : '-' },
+        { label: '内存占用', value: proc.rss_kb ? formatBytes(proc.rss_kb * 1024) : '-' },
+        { label: '进程数', value: gw.process_count || 1 },
+        { label: '状态', value: isRunning ? '✅ 运行中' : '❌ 已停止' },
+      ];
+
+      let html = '';
+      items.forEach(item => {
+        html += '<div class="gateway-detail-item">';
+        html += '<div class="gateway-detail-label">' + item.label + '</div>';
+        html += '<div class="gateway-detail-value' + (item.mono ? ' mono' : '') + '">' + escapeHtml(String(item.value)) + '</div>';
+        html += '</div>';
+      });
+
+      loading.style.display = 'none';
+      content.style.display = 'grid';
+      content.innerHTML = html;
+      document.getElementById('gateway-updated').textContent = nowTimeStr();
+    }
+
+    // ====== 辅助函数 ======
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function extractProvider(modelId) {
+      if (!modelId) return null;
+      const parts = modelId.split('/');
+      return parts.length > 1 ? parts[0] : null;
+    }
+
+    function getProviderIcon(provider) {
+      const icons = {
+        'openai': '🟢',
+        'anthropic': '🟣',
+        'bailian': '🔵',
+        'google': '🔴',
+        'azure': '🔷',
+        'deepseek': '🌊',
+        'ollama': '🦙',
+        'groq': '⚡',
+        'mistral': '🌬️',
+      };
+      return icons[provider.toLowerCase()] || '🔹';
+    }
+
+    function formatContext(ctx) {
+      if (!ctx) return '';
+      const n = typeof ctx === 'string' ? parseInt(ctx) : ctx;
+      if (isNaN(n)) return ctx;
+      if (n >= 1000000) return (n / 1000000).toFixed(0) + 'M';
+      if (n >= 1000) return (n / 1000).toFixed(0) + 'K';
+      return String(n);
+    }
+
+    // ====== 错误处理 ======
+
+    function showError(msg) {
+      const banner = document.getElementById('error-banner');
+      document.getElementById('error-message').textContent = msg;
+      banner.classList.add('visible');
+    }
+
+    function dismissError() {
+      document.getElementById('error-banner').classList.remove('visible');
+    }
+
+    // ====== 数据加载 ======
+
+    let refreshTimer = null;
+    let countdownTimer = null;
+    let countdown = 30;
+    let isRefreshing = false;
+
+    async function loadData() {
+      if (isRefreshing) return;
+      isRefreshing = true;
+
+      const indicator = document.getElementById('refresh-indicator');
+      indicator.classList.add('refreshing');
+
+      try {
+        // 尝试获取完整状态
+        const data = await fetchJSON('/api/host/status');
+        dismissError();
+
+        renderStats(data);
+        renderAgents(data.agents || []);
+        renderModels(data.models || {});
+        renderGateway(data.gateway || null);
+      } catch (e) {
+        console.warn('Full status API failed, trying individual endpoints...', e);
+
+        // 降级：分别请求各个 API
+        let hasError = true;
+        try {
+          const [gwData, agentData, sysData, modelData] = await Promise.allSettled([
+            fetchJSON('/api/host/gateway'),
+            fetchJSON('/api/host/agents'),
+            fetchJSON('/api/host/system'),
+            fetchJSON('/api/host/models'),
+          ]);
+
+          const combined = {};
+
+          if (gwData.status === 'fulfilled') {
+            combined.gateway = gwData.value;
+            combined.version = gwData.value.version;
+            hasError = false;
+          }
+          if (agentData.status === 'fulfilled') {
+            combined.agents = Array.isArray(agentData.value) ? agentData.value : (agentData.value.agents || []);
+            hasError = false;
+          }
+          if (sysData.status === 'fulfilled') {
+            combined.system = sysData.value;
+            hasError = false;
+          }
+          if (modelData.status === 'fulfilled') {
+            combined.models = modelData.value;
+            hasError = false;
+          }
+
+          if (!hasError) {
+            dismissError();
+            renderStats(combined);
+            if (combined.agents) renderAgents(combined.agents);
+            if (combined.models) renderModels(combined.models);
+            if (combined.gateway) renderGateway(combined.gateway);
+          }
+        } catch (e2) {
+          // all failed
+        }
+
+        if (hasError) {
+          showError('无法连接到主机 API，请检查 Gateway 是否正常运行。');
+        }
+      } finally {
+        isRefreshing = false;
+        indicator.classList.remove('refreshing');
+      }
+    }
+
+    function refreshData() {
+      countdown = 30;
+      loadData();
+    }
+
+    function startAutoRefresh() {
+      // 倒计时更新
+      countdownTimer = setInterval(() => {
+        countdown--;
+        if (countdown <= 0) {
+          countdown = 30;
+          loadData();
+        }
+        document.getElementById('refresh-countdown').textContent = countdown + 's 后刷新';
+      }, 1000);
+    }
+
+    // ====== 初始化 ======
+
+    document.addEventListener('DOMContentLoaded', function() {
+      loadData();
+      startAutoRefresh();
+    });
+  </script>
+<script src="/js/auth.js"></script>
+    <script>AUTH.requireAuth();</script>
+</body>
+</html>

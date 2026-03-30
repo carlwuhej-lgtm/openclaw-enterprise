@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>告警中心 - OpenClaw Enterprise</title>
+  <link rel="stylesheet" href="/css/style.css?v=10">
+  <link rel="stylesheet" href="/css/responsive.css?v=10">
+</head>
+<body>
+  <!-- 侧边栏 -->
+    <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-brand">
+        <div class="logo-icon">🐱</div>
+        <div class="logo-text">
+          <h1>OpenClaw</h1>
+          <p>Enterprise</p>
+        </div>
+      </div>
+    </div>
+        <div class="nav-section">
+      <div class="nav-section-title">总览</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/dashboard" ><span class="nav-icon">📊</span> 控制台</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">资产管理</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/devices" ><span class="nav-icon">💻</span> 实例管理</a></li>
+        <li><a href="/pages/agents" ><span class="nav-icon">🤖</span> Agent 管理</a></li>
+        <li><a href="/pages/tenants" ><span class="nav-icon">🏢</span> 租户管理</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">安全管控</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/policies" ><span class="nav-icon">🛡️</span> 安全管控</a></li>
+        <li><a href="/pages/scanner" ><span class="nav-icon">🔍</span> 网络扫描</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">监控审计</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/alerts" class="active"><span class="nav-icon">🚨</span> 告警中心</a></li>
+        <li><a href="/pages/audit" ><span class="nav-icon">📋</span> 审计日志</a></li>
+        <li><a href="/pages/syslog"><span class="nav-icon">📜</span> 日志中心</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">分析报告</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/analytics" ><span class="nav-icon">📊</span> 分析中心</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">系统工具</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/clinic" class="active"><span class="nav-icon">🏥</span> 急救室</a></li>
+        <li><a href="/pages/notification" ><span class="nav-icon">🔔</span> 通知配置</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- 主内容区 -->
+  <main class="main-content">
+    <!-- 顶部栏 -->
+    <div class="topbar">
+      <div class="breadcrumb">
+        <div class="breadcrumb-item"><span>🏠</span><span>首页</span></div>
+        <span class="breadcrumb-separator">/</span>
+        <div class="breadcrumb-item">告警中心</div>
+      </div>
+      
+      <div class="topbar-actions">
+        <div class="search-box" id="search-box">
+          <span style="margin-right: 0.5rem;">🔍</span>
+          <input type="text" id="search-input" placeholder="搜索告警标题..." oninput="handleSearch()">
+        </div>
+        <button class="icon-btn">🔔</button>
+        <div class="user-menu">
+          <div class="user-avatar">S</div>
+          <div class="user-info">
+            <span class="user-name">丝可乐</span>
+            <span class="user-role">安全管理员</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 内容区 -->
+    <div class="content">
+      <div class="page-header">
+        <h1 class="page-title">🚨 告警中心</h1>
+        <p class="page-subtitle">实时监控安全告警，快速响应与处置威胁事件</p>
+      </div>
+
+      <!-- 统计卡片 -->
+      <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="stat-card">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-total">-</div>
+              <div class="stat-label">总告警数</div>
+            </div>
+            <div class="stat-icon">🚨</div>
+          </div>
+        </div>
+        <div class="stat-card danger">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-unresolved">-</div>
+              <div class="stat-label">未解决</div>
+            </div>
+            <div class="stat-icon">🔴</div>
+          </div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-resolved">-</div>
+              <div class="stat-label">已解决</div>
+            </div>
+            <div class="stat-icon">✅</div>
+          </div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-critical">-</div>
+              <div class="stat-label">严重告警</div>
+            </div>
+            <div class="stat-icon">🔥</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 告警列表 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 告警列表</div>
+          <div class="card-actions">
+            <select id="status-filter" class="filter-select" onchange="handleFilter()">
+              <option value="">全部状态</option>
+              <option value="unresolved">🔴 未解决</option>
+              <option value="resolved">✅ 已解决</option>
+            </select>
+            <select id="level-filter" class="filter-select" onchange="handleFilter()">
+              <option value="">全部级别</option>
+              <option value="critical">🔴 严重</option>
+              <option value="high">🟠 高</option>
+              <option value="medium">🟡 中</option>
+              <option value="low">🔵 低</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="batchResolve()" id="batch-resolve-btn" disabled>✅ 批量解决</button>
+            <button class="btn btn-primary btn-sm" onclick="openCreateModal()">➕ 创建告警</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:40px;"><input type="checkbox" id="select-all" onchange="toggleSelectAll()"></th>
+                  <th>ID</th>
+                  <th>标题</th>
+                  <th>级别</th>
+                  <th>关联实例</th>
+                  <th>状态</th>
+                  <th>创建时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="alerts-table">
+                <tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted);">加载中...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- 分页 -->
+          <div class="pagination-bar" id="pagination-bar">
+            <div class="pagination-info">
+              共 <span id="total-records">0</span> 条记录，第 <span id="current-page-num">1</span>/<span id="total-pages">1</span> 页
+            </div>
+            <div class="pagination-controls">
+              <button class="btn btn-secondary btn-sm" id="btn-prev" onclick="goPage('prev')" disabled>‹ 上一页</button>
+              <div class="pagination-pages" id="page-numbers"></div>
+              <button class="btn btn-secondary btn-sm" id="btn-next" onclick="goPage('next')">下一页 ›</button>
+              <select class="filter-select page-size-select" id="page-size" onchange="changePageSize()">
+                <option value="10">10 条/页</option>
+                <option value="20">20 条/页</option>
+                <option value="50">50 条/页</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 创建告警 Modal -->
+  <div class="modal-overlay" id="create-modal" onclick="closeModalOnOverlay(event, 'create-modal')">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>➕ 创建告警</h3>
+        <button class="modal-close" onclick="closeModal('create-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="create-form" onsubmit="submitCreate(event)">
+          <div class="form-group">
+            <label class="form-label">标题 <span class="required">*</span></label>
+            <input type="text" class="form-input" name="title" placeholder="告警标题" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">描述</label>
+            <textarea class="form-input form-textarea" name="description" placeholder="告警详细描述..." rows="3"></textarea>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">级别 <span class="required">*</span></label>
+              <select class="form-input" name="level" required>
+                <option value="low">🔵 低</option>
+                <option value="medium">🟡 中</option>
+                <option value="high" selected>🟠 高</option>
+                <option value="critical">🔴 严重</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">关联实例</label>
+              <select class="form-input" name="device_id" id="create-device-select">
+                <option value="">无关联实例</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('create-modal')">取消</button>
+            <button type="submit" class="btn btn-primary">创建告警</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .filter-select {
+      background: var(--dark-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--dark-border);
+      border-radius: 8px;
+      padding: 0.5rem 0.875rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .filter-select:hover,
+    .filter-select:focus { border-color: var(--primary); }
+
+    .pagination-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--dark-border);
+      background: rgba(15, 23, 42, 0.3);
+    }
+    .pagination-info { font-size: 0.85rem; color: var(--text-secondary); }
+    .pagination-controls { display: flex; align-items: center; gap: 0.5rem; }
+    .pagination-pages { display: flex; gap: 0.25rem; }
+    .page-btn {
+      min-width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px; border: 1px solid var(--dark-border);
+      background: var(--dark-bg); color: var(--text-secondary);
+      font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+    }
+    .page-btn:hover { border-color: var(--primary); color: var(--text-primary); }
+    .page-btn.active {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff; border-color: var(--primary);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    }
+    .page-btn.ellipsis { border: none; background: none; cursor: default; color: var(--text-muted); }
+    .page-size-select { margin-left: 0.5rem; }
+
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+      z-index: 1000; justify-content: center; align-items: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--dark-card); border: 1px solid var(--dark-border);
+      border-radius: 16px; width: 90%; max-width: 600px;
+      max-height: 85vh; overflow-y: auto;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+      animation: modalSlideIn 0.25s ease-out;
+    }
+    @keyframes modalSlideIn {
+      from { opacity: 0; transform: translateY(-20px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--dark-border);
+    }
+    .modal-header h3 { font-size: 1.1rem; font-weight: 600; }
+    .modal-close {
+      width: 32px; height: 32px; border-radius: 8px;
+      border: 1px solid var(--dark-border); background: var(--dark-bg);
+      color: var(--text-secondary); font-size: 1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+    }
+    .modal-close:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer {
+      display: flex; justify-content: flex-end; gap: 0.75rem;
+      margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--dark-border);
+    }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.375rem; margin-top: 0.75rem; }
+    .form-label { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); }
+    .form-label .required { color: var(--danger); }
+    .form-input {
+      background: var(--dark-bg); border: 1px solid var(--dark-border);
+      border-radius: 8px; padding: 0.625rem 0.875rem;
+      color: var(--text-primary); font-size: 0.9rem;
+      outline: none; transition: border-color 0.2s; font-family: inherit;
+    }
+    .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15); }
+    .form-input::placeholder { color: var(--text-muted); }
+    .form-textarea { resize: vertical; min-height: 80px; }
+
+    .action-group { display: flex; gap: 0.375rem; flex-wrap: wrap; }
+    .btn-xs { padding: 0.3rem 0.6rem; font-size: 0.75rem; border-radius: 6px; }
+
+    /* Level badges */
+    .level-badge {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;
+    }
+    .level-critical { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .level-high { background: rgba(249,115,22,0.15); color: #f97316; }
+    .level-medium { background: rgba(234,179,8,0.15); color: #eab308; }
+    .level-low { background: rgba(59,130,246,0.15); color: #3b82f6; }
+
+    /* Checkbox styling */
+    .row-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); }
+    #select-all { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); }
+
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      .form-grid { grid-template-columns: 1fr; }
+      .pagination-bar { flex-direction: column; gap: 0.75rem; }
+      .card-actions { flex-wrap: wrap; }
+    }
+  </style>
+
+  <script src="/js/auth.js"></script>
+    <script>AUTH.requireAuth();</script>
+    <script src="/js/app.js?v=4"></script>
+  <script>
+    // ==================== 状态 ====================
+    let allAlerts = [];
+    let filteredAlerts = [];
+    let allDevices = [];
+    let currentPage = 1;
+    let pageSize = 10;
+    let selectedIds = new Set();
+
+    // ==================== 初始化 ====================
+    document.addEventListener('DOMContentLoaded', function() {
+      loadAlertData();
+      loadDeviceList();
+      setInterval(loadAlertData, 30000);
+    });
+
+    // ==================== 数据加载 ====================
+    async function loadAlertData() {
+      const result = await fetchAPI('/alerts?page=1&page_size=200');
+      if (!result) {
+        document.getElementById('alerts-table').innerHTML =
+          '<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted);">⚠️ 无法连接服务器</td></tr>';
+        return;
+      }
+      allAlerts = Array.isArray(result) ? result : (result.items || []);
+      applyFilters();
+      updateStats();
+    }
+
+    async function loadDeviceList() {
+      const devices = await fetchAPI('/devices?page=1&page_size=200');
+      allDevices = Array.isArray(devices) ? devices : (devices ? devices.items || [] : []);
+      const select = document.getElementById('create-device-select');
+      select.innerHTML = '<option value="">无关联实例</option>' +
+        allDevices.map(d => `<option value="${d.id}">${escHtml(d.name)} (${escHtml(d.ip || d.hostname || '')})</option>`).join('');
+    }
+
+    function updateStats() {
+      const total = allAlerts.length;
+      const unresolved = allAlerts.filter(a => !a.is_resolved).length;
+      const resolved = allAlerts.filter(a => a.is_resolved).length;
+      const critical = allAlerts.filter(a => a.level === 'critical' && !a.is_resolved).length;
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-unresolved').textContent = unresolved;
+      document.getElementById('stat-resolved').textContent = resolved;
+      document.getElementById('stat-critical').textContent = critical;
+    }
+
+    // ==================== 搜索 & 过滤 ====================
+    function handleSearch() { currentPage = 1; applyFilters(); }
+    function handleFilter() { currentPage = 1; applyFilters(); }
+
+    function applyFilters() {
+      const query = (document.getElementById('search-input').value || '').toLowerCase().trim();
+      const statusFilter = document.getElementById('status-filter').value;
+      const levelFilter = document.getElementById('level-filter').value;
+
+      filteredAlerts = allAlerts.filter(a => {
+        const matchSearch = !query || (a.title || '').toLowerCase().includes(query);
+        let matchStatus = true;
+        if (statusFilter === 'unresolved') matchStatus = !a.is_resolved;
+        else if (statusFilter === 'resolved') matchStatus = !!a.is_resolved;
+        const matchLevel = !levelFilter || a.level === levelFilter;
+        return matchSearch && matchStatus && matchLevel;
+      });
+
+      selectedIds.clear();
+      document.getElementById('select-all').checked = false;
+      updateBatchBtn();
+      renderTable();
+      renderPagination();
+    }
+
+    // ==================== 渲染表格 ====================
+    function renderTable() {
+      const tbody = document.getElementById('alerts-table');
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+      const pageData = filteredAlerts.slice(start, end);
+
+      if (pageData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted);">暂无匹配告警</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = pageData.map(alert => {
+        const levelBadge = getLevelBadge(alert.level);
+        const device = allDevices.find(d => d.id === alert.device_id);
+        const deviceName = device ? escHtml(device.name) : (alert.device_id ? `实例 #${alert.device_id}` : '-');
+        const statusText = alert.is_resolved
+          ? '<span class="badge badge-green">✅ 已解决</span>'
+          : '<span class="badge badge-red">🔴 未解决</span>';
+        const checked = selectedIds.has(alert.id) ? 'checked' : '';
+
+        return `<tr>
+          <td><input type="checkbox" class="row-checkbox" value="${alert.id}" ${checked} onchange="toggleSelect(${alert.id})"></td>
+          <td style="color:var(--text-muted);font-family:monospace;font-size:0.8rem;">#${alert.id}</td>
+          <td><span style="font-weight:600;">${escHtml(alert.title)}</span></td>
+          <td>${levelBadge}</td>
+          <td style="font-size:0.85rem;">${deviceName}</td>
+          <td>${statusText}</td>
+          <td style="color:var(--text-muted);font-size:0.85rem;">${alert.created_at ? formatTime(alert.created_at) : '-'}</td>
+          <td>
+            <div class="action-group">
+              ${!alert.is_resolved ? `<button class="btn btn-primary btn-xs" onclick="resolveAlert(${alert.id})">✅ 解决</button>` : ''}
+              <button class="btn btn-danger btn-xs" onclick="deleteAlert(${alert.id})">🗑️ 删除</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function getLevelBadge(level) {
+      const map = {
+        critical: '<span class="level-badge level-critical">🔴 严重</span>',
+        high: '<span class="level-badge level-high">🟠 高</span>',
+        medium: '<span class="level-badge level-medium">🟡 中</span>',
+        low: '<span class="level-badge level-low">🔵 低</span>'
+      };
+      return map[level] || '<span class="level-badge">⚪ 未知</span>';
+    }
+
+    // ==================== 选择 & 批量 ====================
+    function toggleSelectAll() {
+      const checked = document.getElementById('select-all').checked;
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+      const pageData = filteredAlerts.slice(start, end);
+
+      if (checked) {
+        pageData.forEach(a => { if (!a.is_resolved) selectedIds.add(a.id); });
+      } else {
+        pageData.forEach(a => selectedIds.delete(a.id));
+      }
+
+      document.querySelectorAll('.row-checkbox').forEach(cb => {
+        const id = parseInt(cb.value);
+        const alert = allAlerts.find(a => a.id === id);
+        if (alert && !alert.is_resolved) cb.checked = checked;
+      });
+      updateBatchBtn();
+    }
+
+    function toggleSelect(id) {
+      if (selectedIds.has(id)) selectedIds.delete(id);
+      else selectedIds.add(id);
+      updateBatchBtn();
+    }
+
+    function updateBatchBtn() {
+      const btn = document.getElementById('batch-resolve-btn');
+      btn.disabled = selectedIds.size === 0;
+      btn.textContent = selectedIds.size > 0 ? `✅ 批量解决 (${selectedIds.size})` : '✅ 批量解决';
+    }
+
+    async function batchResolve() {
+      if (selectedIds.size === 0) return;
+      if (!confirm(`确定批量解决 ${selectedIds.size} 条告警？`)) return;
+
+      const result = await updateAPI('/alerts/batch-resolve', { ids: Array.from(selectedIds) }, 'POST');
+      if (result) {
+        showToast(`✅ 已批量解决 ${selectedIds.size} 条告警`);
+        selectedIds.clear();
+        loadAlertData();
+      } else {
+        // Fallback: resolve one by one
+        let success = 0;
+        for (const id of selectedIds) {
+          const r = await updateAPI(`/alerts/${id}/resolve`, {}, 'POST');
+          if (r) success++;
+        }
+        if (success > 0) {
+          showToast(`✅ 已解决 ${success} 条告警`);
+          selectedIds.clear();
+          loadAlertData();
+        } else {
+          showToast('❌ 批量解决失败', 'error');
+        }
+      }
+    }
+
+    // ==================== CRUD ====================
+    async function resolveAlert(id) {
+      const result = await updateAPI(`/alerts/${id}/resolve`, {}, 'POST');
+      if (result) {
+        showToast('✅ 告警已解决');
+        loadAlertData();
+      } else {
+        showToast('❌ 操作失败', 'error');
+      }
+    }
+
+    async function deleteAlert(id) {
+      if (!confirm('确定删除该告警？此操作不可撤销。')) return;
+      try {
+        const response = await fetch(`${API_BASE}/alerts/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+          showToast('✅ 告警已删除');
+          loadAlertData();
+        } else {
+          showToast('❌ 删除失败', 'error');
+        }
+      } catch (e) {
+        showToast('❌ 删除失败', 'error');
+      }
+    }
+
+    function openCreateModal() {
+      document.getElementById('create-form').reset();
+      openModal('create-modal');
+    }
+
+    async function submitCreate(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        title: form.title.value,
+        description: form.description.value,
+        level: form.level.value,
+        device_id: form.device_id.value ? parseInt(form.device_id.value) : null
+      };
+      const result = await updateAPI('/alerts', data, 'POST');
+      if (result) {
+        closeModal('create-modal');
+        showToast('✅ 告警已创建');
+        loadAlertData();
+      } else {
+        showToast('❌ 创建失败', 'error');
+      }
+    }
+
+    // ==================== 分页 ====================
+    function renderPagination() {
+      const total = filteredAlerts.length;
+      const totalPg = Math.max(1, Math.ceil(total / pageSize));
+      if (currentPage > totalPg) currentPage = totalPg;
+
+      document.getElementById('total-records').textContent = total;
+      document.getElementById('current-page-num').textContent = currentPage;
+      document.getElementById('total-pages').textContent = totalPg;
+      document.getElementById('btn-prev').disabled = currentPage <= 1;
+      document.getElementById('btn-next').disabled = currentPage >= totalPg;
+
+      const container = document.getElementById('page-numbers');
+      const pages = generatePageNumbers(currentPage, totalPg);
+      container.innerHTML = pages.map(p => {
+        if (p === '...') return '<span class="page-btn ellipsis">…</span>';
+        return `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="goToPage(${p})">${p}</button>`;
+      }).join('');
+    }
+
+    function generatePageNumbers(current, total) {
+      if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+      const pages = [];
+      if (current <= 4) { for (let i = 1; i <= 5; i++) pages.push(i); pages.push('...', total); }
+      else if (current >= total - 3) { pages.push(1, '...'); for (let i = total - 4; i <= total; i++) pages.push(i); }
+      else { pages.push(1, '...', current - 1, current, current + 1, '...', total); }
+      return pages;
+    }
+
+    function goPage(dir) {
+      if (dir === 'prev' && currentPage > 1) currentPage--;
+      else if (dir === 'next') currentPage++;
+      renderTable(); renderPagination();
+    }
+    function goToPage(n) { currentPage = n; renderTable(); renderPagination(); }
+    function changePageSize() { pageSize = parseInt(document.getElementById('page-size').value); currentPage = 1; renderTable(); renderPagination(); }
+
+    // ==================== 辅助 ====================
+    function escHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+    function closeModalOnOverlay(e, id) { if (e.target === e.currentTarget) closeModal(id); }
+
+    function showToast(msg, type = 'success') {
+      const existing = document.querySelector('.toast');
+      if (existing) existing.remove();
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.style.cssText = `position:fixed;top:1.5rem;right:1.5rem;z-index:2000;padding:0.875rem 1.5rem;border-radius:10px;background:${type === 'error' ? 'rgba(239,68,68,0.95)' : 'rgba(16,185,129,0.95)'};color:#fff;font-weight:600;font-size:0.9rem;box-shadow:0 8px 24px rgba(0,0,0,0.3);animation:toastIn 0.3s ease-out;`;
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 3000);
+    }
+
+    const toastStyle = document.createElement('style');
+    toastStyle.textContent = `@keyframes toastIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }`;
+    document.head.appendChild(toastStyle);
+  </script>
+</body>
+</html>

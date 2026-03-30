@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>安全管控 - OpenClaw Enterprise</title>
+  <link rel="stylesheet" href="/css/style.css?v=10">
+  <link rel="stylesheet" href="/css/responsive.css?v=10">
+</head>
+<body>
+  <!-- 侧边栏 -->
+    <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-brand">
+        <div class="logo-icon">🐱</div>
+        <div class="logo-text">
+          <h1>OpenClaw</h1>
+          <p>Enterprise</p>
+        </div>
+      </div>
+    </div>
+        <div class="nav-section">
+      <div class="nav-section-title">总览</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/dashboard" ><span class="nav-icon">📊</span> 控制台</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">资产管理</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/devices" ><span class="nav-icon">💻</span> 实例管理</a></li>
+        <li><a href="/pages/agents" ><span class="nav-icon">🤖</span> Agent 管理</a></li>
+        <li><a href="/pages/tenants" ><span class="nav-icon">🏢</span> 租户管理</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">安全管控</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/policies" class="active"><span class="nav-icon">🛡️</span> 安全管控</a></li>
+        <li><a href="/pages/scanner" ><span class="nav-icon">🔍</span> 网络扫描</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">监控审计</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/alerts" ><span class="nav-icon">🚨</span> 告警中心</a></li>
+        <li><a href="/pages/audit" ><span class="nav-icon">📋</span> 审计日志</a></li>
+        <li><a href="/pages/syslog"><span class="nav-icon">📜</span> 日志中心</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">分析报告</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/analytics" ><span class="nav-icon">📊</span> 分析中心</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">系统工具</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/clinic" class="active"><span class="nav-icon">🏥</span> 急救室</a></li>
+        <li><a href="/pages/notification" ><span class="nav-icon">🔔</span> 通知配置</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- 主内容区 -->
+  <main class="main-content">
+    <!-- 顶部栏 -->
+    <div class="topbar">
+      <div class="breadcrumb">
+        <div class="breadcrumb-item"><span>🏠</span><span>首页</span></div>
+        <span class="breadcrumb-separator">/</span>
+        <div class="breadcrumb-item">安全管控</div>
+      </div>
+      
+      <div class="topbar-actions">
+        <div class="search-box" id="search-box">
+          <span style="margin-right: 0.5rem;">🔍</span>
+          <input type="text" id="search-input" placeholder="搜索策略名称..." oninput="handleSearch()">
+        </div>
+        <button class="icon-btn">🔔</button>
+        <div class="user-menu">
+          <div class="user-avatar">S</div>
+          <div class="user-info">
+            <span class="user-name">丝可乐</span>
+            <span class="user-role">安全管理员</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 内容区 -->
+    <div class="content">
+      <div class="page-header">
+        <h1 class="page-title">🛡️ 安全管控</h1>
+        <p class="page-subtitle">策略配置 · 违规检测 · 管控执行</p>
+      </div>
+
+      <!-- 统计卡片 -->
+      <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="stat-card">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-total">-</div>
+              <div class="stat-label">总策略数</div>
+            </div>
+            <div class="stat-icon">🛡️</div>
+          </div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-enabled">-</div>
+              <div class="stat-label">已启用</div>
+            </div>
+            <div class="stat-icon">✅</div>
+          </div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-disabled">-</div>
+              <div class="stat-label">已禁用</div>
+            </div>
+            <div class="stat-icon">⏸️</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 策略列表 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 策略列表</div>
+          <div class="card-actions">
+            <select id="status-filter" class="filter-select" onchange="handleFilter()">
+              <option value="">全部状态</option>
+              <option value="enabled">✅ 已启用</option>
+              <option value="disabled">⏸️ 已禁用</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="openCreateModal()">➕ 创建策略</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>策略名称</th>
+                  <th>描述</th>
+                  <th>配置</th>
+                  <th>启用状态</th>
+                  <th>更新时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="policies-table">
+                <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">加载中...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- 分页 -->
+          <div class="pagination-bar" id="pagination-bar">
+            <div class="pagination-info">
+              共 <span id="total-records">0</span> 条记录，第 <span id="current-page-num">1</span>/<span id="total-pages">1</span> 页
+            </div>
+            <div class="pagination-controls">
+              <button class="btn btn-secondary btn-sm" id="btn-prev" onclick="goPage('prev')" disabled>‹ 上一页</button>
+              <div class="pagination-pages" id="page-numbers"></div>
+              <button class="btn btn-secondary btn-sm" id="btn-next" onclick="goPage('next')">下一页 ›</button>
+              <select class="filter-select page-size-select" id="page-size" onchange="changePageSize()">
+                <option value="10">10 条/页</option>
+                <option value="20">20 条/页</option>
+                <option value="50">50 条/页</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 管控执行 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1.5rem;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⚡ 快速管控</div>
+          </div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:1rem;">
+              <div>
+                <label style="display:block;margin-bottom:0.5rem;font-weight:600;font-size:0.85rem;">目标 IP</label>
+                <input type="text" id="block-ip" 
+                       style="width:100%;padding:0.625rem;background:var(--dark-bg);border:1px solid var(--dark-border);border-radius:8px;color:var(--text-primary);font-size:0.9rem;"
+                       placeholder="例如：192.168.1.189">
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                <div>
+                  <label style="display:block;margin-bottom:0.5rem;font-weight:600;font-size:0.85rem;">端口</label>
+                  <input type="number" id="block-port" value="18789"
+                         style="width:100%;padding:0.625rem;background:var(--dark-bg);border:1px solid var(--dark-border);border-radius:8px;color:var(--text-primary);font-size:0.9rem;">
+                </div>
+                <div>
+                  <label style="display:block;margin-bottom:0.5rem;font-weight:600;font-size:0.85rem;">方式</label>
+                  <select id="block-method" style="width:100%;padding:0.625rem;background:var(--dark-bg);border:1px solid var(--dark-border);border-radius:8px;color:var(--text-primary);font-size:0.9rem;">
+                    <option value="auto">🤖 自动</option>
+                    <option value="iptables">🔥 iptables</option>
+                    <option value="pfctl">🍎 pfctl</option>
+                    <option value="process">⚡ 终止进程</option>
+                  </select>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                <button class="btn btn-danger" onclick="executeBlock()" style="justify-content:center;">🚫 阻断</button>
+                <button class="btn btn-secondary" onclick="executeUnblock()" style="justify-content:center;">✅ 解除</button>
+              </div>
+              <div id="block-result" style="display:none;padding:0.75rem;border-radius:8px;font-size:0.85rem;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🔎 进程检测</div>
+            <button class="btn btn-secondary btn-sm" onclick="detectProcesses()">🔄 刷新</button>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <div id="process-list" style="max-height:300px;overflow-y:auto;padding:1rem;">
+              <div style="text-align:center;color:var(--text-muted);padding:1rem;">点击刷新检测 OpenClaw 进程</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- 创建策略 Modal -->
+  <div class="modal-overlay" id="create-modal" onclick="closeModalOnOverlay(event, 'create-modal')">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>➕ 创建策略</h3>
+        <button class="modal-close" onclick="closeModal('create-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="create-form" onsubmit="submitCreate(event)">
+          <div class="form-group">
+            <label class="form-label">策略名称 <span class="required">*</span></label>
+            <input type="text" class="form-input" name="name" placeholder="如：禁止执行危险命令" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">描述</label>
+            <textarea class="form-input form-textarea" name="description" placeholder="策略用途说明..." rows="2"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">配置 (JSON)</label>
+            <textarea class="form-input form-textarea config-textarea" name="config" placeholder='{"blocked_commands": ["rm -rf /"], "max_file_size": 10485760}' rows="5"></textarea>
+          </div>
+          <div class="form-group" style="flex-direction:row;align-items:center;gap:0.75rem;">
+            <label class="toggle-switch">
+              <input type="checkbox" name="is_enabled" checked>
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="form-label" style="margin:0;">创建后立即启用</span>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('create-modal')">取消</button>
+            <button type="submit" class="btn btn-primary">创建策略</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑策略 Modal -->
+  <div class="modal-overlay" id="edit-modal" onclick="closeModalOnOverlay(event, 'edit-modal')">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>✏️ 编辑策略</h3>
+        <button class="modal-close" onclick="closeModal('edit-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-form" onsubmit="submitEdit(event)">
+          <input type="hidden" name="id" id="edit-id">
+          <div class="form-group">
+            <label class="form-label">策略名称 <span class="required">*</span></label>
+            <input type="text" class="form-input" name="name" id="edit-name" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">描述</label>
+            <textarea class="form-input form-textarea" name="description" id="edit-description" rows="2"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">配置 (JSON)</label>
+            <textarea class="form-input form-textarea config-textarea" name="config" id="edit-config" rows="5"></textarea>
+          </div>
+          <div class="form-group" style="flex-direction:row;align-items:center;gap:0.75rem;">
+            <label class="toggle-switch">
+              <input type="checkbox" name="is_enabled" id="edit-enabled">
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="form-label" style="margin:0;">启用策略</span>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('edit-modal')">取消</button>
+            <button type="submit" class="btn btn-primary">保存修改</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- JSON 查看 Modal -->
+  <div class="modal-overlay" id="json-modal" onclick="closeModalOnOverlay(event, 'json-modal')">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>📄 策略配置</h3>
+        <button class="modal-close" onclick="closeModal('json-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <pre class="json-viewer" id="json-content"></pre>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .filter-select {
+      background: var(--dark-bg); color: var(--text-primary);
+      border: 1px solid var(--dark-border); border-radius: 8px;
+      padding: 0.5rem 0.875rem; font-size: 0.85rem;
+      cursor: pointer; outline: none; transition: border-color 0.2s;
+    }
+    .filter-select:hover, .filter-select:focus { border-color: var(--primary); }
+
+    .pagination-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1rem 1.5rem; border-top: 1px solid var(--dark-border);
+      background: rgba(15, 23, 42, 0.3);
+    }
+    .pagination-info { font-size: 0.85rem; color: var(--text-secondary); }
+    .pagination-controls { display: flex; align-items: center; gap: 0.5rem; }
+    .pagination-pages { display: flex; gap: 0.25rem; }
+    .page-btn {
+      min-width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px; border: 1px solid var(--dark-border);
+      background: var(--dark-bg); color: var(--text-secondary);
+      font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+    }
+    .page-btn:hover { border-color: var(--primary); color: var(--text-primary); }
+    .page-btn.active {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff; border-color: var(--primary);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    }
+    .page-btn.ellipsis { border: none; background: none; cursor: default; color: var(--text-muted); }
+    .page-size-select { margin-left: 0.5rem; }
+
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+      z-index: 1000; justify-content: center; align-items: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--dark-card); border: 1px solid var(--dark-border);
+      border-radius: 16px; width: 90%; max-width: 600px;
+      max-height: 85vh; overflow-y: auto;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+      animation: modalSlideIn 0.25s ease-out;
+    }
+    @keyframes modalSlideIn {
+      from { opacity: 0; transform: translateY(-20px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--dark-border);
+    }
+    .modal-header h3 { font-size: 1.1rem; font-weight: 600; }
+    .modal-close {
+      width: 32px; height: 32px; border-radius: 8px;
+      border: 1px solid var(--dark-border); background: var(--dark-bg);
+      color: var(--text-secondary); font-size: 1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+    }
+    .modal-close:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer {
+      display: flex; justify-content: flex-end; gap: 0.75rem;
+      margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--dark-border);
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: 0.375rem; margin-top: 0.75rem; }
+    .form-label { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); }
+    .form-label .required { color: var(--danger); }
+    .form-input {
+      background: var(--dark-bg); border: 1px solid var(--dark-border);
+      border-radius: 8px; padding: 0.625rem 0.875rem;
+      color: var(--text-primary); font-size: 0.9rem;
+      outline: none; transition: border-color 0.2s; font-family: inherit;
+    }
+    .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15); }
+    .form-input::placeholder { color: var(--text-muted); }
+    .form-textarea { resize: vertical; min-height: 60px; }
+    .config-textarea { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; }
+
+    .action-group { display: flex; gap: 0.375rem; flex-wrap: wrap; }
+    .btn-xs { padding: 0.3rem 0.6rem; font-size: 0.75rem; border-radius: 6px; }
+
+    /* Toggle switch */
+    .toggle-switch {
+      position: relative; display: inline-block;
+      width: 44px; height: 24px; flex-shrink: 0;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--dark-border); border-radius: 24px;
+      transition: 0.3s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute;
+      height: 18px; width: 18px;
+      left: 3px; bottom: 3px;
+      background: #fff; border-radius: 50%;
+      transition: 0.3s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background: var(--success); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    /* Inline toggle for table */
+    .table-toggle {
+      position: relative; display: inline-block;
+      width: 38px; height: 20px; flex-shrink: 0; cursor: pointer;
+    }
+    .table-toggle input { opacity: 0; width: 0; height: 0; }
+    .table-toggle .toggle-slider-sm {
+      position: absolute; cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--dark-border); border-radius: 20px;
+      transition: 0.3s;
+    }
+    .table-toggle .toggle-slider-sm::before {
+      content: ''; position: absolute;
+      height: 14px; width: 14px;
+      left: 3px; bottom: 3px;
+      background: #fff; border-radius: 50%;
+      transition: 0.3s;
+    }
+    .table-toggle input:checked + .toggle-slider-sm { background: var(--success); }
+    .table-toggle input:checked + .toggle-slider-sm::before { transform: translateX(18px); }
+
+    /* Config preview */
+    .config-preview {
+      display: inline-block; max-width: 200px;
+      padding: 0.2rem 0.5rem; border-radius: 6px;
+      background: rgba(15, 23, 42, 0.6); border: 1px solid var(--dark-border);
+      font-family: monospace; font-size: 0.75rem; color: var(--text-muted);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      cursor: pointer; transition: border-color 0.2s;
+    }
+    .config-preview:hover { border-color: var(--primary); color: var(--text-secondary); }
+
+    /* JSON viewer */
+    .json-viewer {
+      background: rgba(15, 23, 42, 0.8); border: 1px solid var(--dark-border);
+      border-radius: 8px; padding: 1rem; font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.85rem; color: var(--text-secondary);
+      overflow-x: auto; white-space: pre-wrap; word-break: break-all;
+      max-height: 400px; overflow-y: auto;
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      .pagination-bar { flex-direction: column; gap: 0.75rem; }
+      .card-actions { flex-wrap: wrap; }
+    }
+  </style>
+
+  <script src="/js/auth.js"></script>
+    <script>AUTH.requireAuth();</script>
+    <script src="/js/app.js?v=4"></script>
+  <script>
+    // ==================== 状态 ====================
+    let allPolicies = [];
+    let filteredPolicies = [];
+    let currentPage = 1;
+    let pageSize = 10;
+
+    // ==================== 初始化 ====================
+    document.addEventListener('DOMContentLoaded', function() {
+      loadPolicyData();
+    });
+
+    // ==================== 数据加载 ====================
+    async function loadPolicyData() {
+      const result = await fetchAPI('/policies?page=1&page_size=200');
+      if (!result) {
+        document.getElementById('policies-table').innerHTML =
+          '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">⚠️ 无法连接服务器</td></tr>';
+        return;
+      }
+      allPolicies = Array.isArray(result) ? result : (result.items || []);
+      applyFilters();
+      updateStats();
+    }
+
+    function updateStats() {
+      const total = allPolicies.length;
+      const enabled = allPolicies.filter(p => p.is_enabled).length;
+      const disabled = total - enabled;
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-enabled').textContent = enabled;
+      document.getElementById('stat-disabled').textContent = disabled;
+    }
+
+    // ==================== 搜索 & 过滤 ====================
+    function handleSearch() { currentPage = 1; applyFilters(); }
+    function handleFilter() { currentPage = 1; applyFilters(); }
+
+    function applyFilters() {
+      const query = (document.getElementById('search-input').value || '').toLowerCase().trim();
+      const statusFilter = document.getElementById('status-filter').value;
+
+      filteredPolicies = allPolicies.filter(p => {
+        const matchSearch = !query || (p.name || '').toLowerCase().includes(query);
+        let matchStatus = true;
+        if (statusFilter === 'enabled') matchStatus = !!p.is_enabled;
+        else if (statusFilter === 'disabled') matchStatus = !p.is_enabled;
+        return matchSearch && matchStatus;
+      });
+
+      renderTable();
+      renderPagination();
+    }
+
+    // ==================== 渲染表格 ====================
+    function renderTable() {
+      const tbody = document.getElementById('policies-table');
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+      const pageData = filteredPolicies.slice(start, end);
+
+      if (pageData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">暂无匹配策略</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = pageData.map(policy => {
+        const configStr = formatConfig(policy.config);
+        const updatedAt = policy.updated_at ? formatTime(policy.updated_at) : '-';
+        const policyIcon = getPolicyIcon(policy.name);
+
+        return `<tr>
+          <td style="color:var(--text-muted);font-family:monospace;font-size:0.8rem;">#${policy.id}</td>
+          <td><span style="font-weight:600;">${policyIcon} ${escHtml(policy.name)}</span></td>
+          <td style="color:var(--text-secondary);font-size:0.85rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(policy.description || '')}">${escHtml(policy.description || '-')}</td>
+          <td><span class="config-preview" onclick="showConfig(${policy.id})" title="点击查看完整配置">${configStr}</span></td>
+          <td>
+            <label class="table-toggle">
+              <input type="checkbox" ${policy.is_enabled ? 'checked' : ''} onchange="togglePolicy(${policy.id}, this.checked)">
+              <span class="toggle-slider-sm"></span>
+            </label>
+          </td>
+          <td style="color:var(--text-muted);font-size:0.85rem;">${updatedAt}</td>
+          <td>
+            <div class="action-group">
+              <button class="btn btn-secondary btn-xs" onclick="openEditModal(${policy.id})">✏️ 编辑</button>
+              <button class="btn btn-danger btn-xs" onclick="deletePolicy(${policy.id})">🗑️ 删除</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function formatConfig(config) {
+      if (!config) return '{}';
+      if (typeof config === 'string') {
+        try { return JSON.stringify(JSON.parse(config)); } catch (e) { return config; }
+      }
+      return JSON.stringify(config);
+    }
+
+    function getPolicyIcon(name) {
+      if (!name) return '🛡️';
+      if (name.includes('禁止')) return '🚫';
+      if (name.includes('密钥') || name.includes('密码')) return '🔑';
+      if (name.includes('外部') || name.includes('网络')) return '🌐';
+      if (name.includes('沙箱') || name.includes('隔离')) return '📦';
+      if (name.includes('审批') || name.includes('审核')) return '⚠️';
+      if (name.includes('日志') || name.includes('审计')) return '📊';
+      if (name.includes('文件')) return '📁';
+      return '🛡️';
+    }
+
+    function showConfig(id) {
+      const policy = allPolicies.find(p => p.id === id);
+      if (!policy) return;
+      let configText;
+      if (!policy.config) {
+        configText = '{}';
+      } else if (typeof policy.config === 'string') {
+        try { configText = JSON.stringify(JSON.parse(policy.config), null, 2); } catch (e) { configText = policy.config; }
+      } else {
+        configText = JSON.stringify(policy.config, null, 2);
+      }
+      document.getElementById('json-content').textContent = configText;
+      openModal('json-modal');
+    }
+
+    // ==================== CRUD ====================
+    async function togglePolicy(id, enabled) {
+      const result = await updateAPI(`/policies/${id}/toggle`, {}, 'POST');
+      if (result) {
+        showToast(enabled ? '✅ 策略已启用' : '⏸️ 策略已禁用');
+        // Update local state
+        const policy = allPolicies.find(p => p.id === id);
+        if (policy) policy.is_enabled = enabled;
+        updateStats();
+      } else {
+        // Fallback: try PUT
+        const policy = allPolicies.find(p => p.id === id);
+        if (policy) {
+          const r = await updateAPI(`/policies/${id}`, { is_enabled: enabled }, 'PUT');
+          if (r) {
+            showToast(enabled ? '✅ 策略已启用' : '⏸️ 策略已禁用');
+            policy.is_enabled = enabled;
+            updateStats();
+          } else {
+            showToast('❌ 操作失败', 'error');
+            loadPolicyData();
+          }
+        }
+      }
+    }
+
+    function openCreateModal() {
+      document.getElementById('create-form').reset();
+      openModal('create-modal');
+    }
+
+    async function submitCreate(e) {
+      e.preventDefault();
+      const form = e.target;
+      let config = {};
+      try {
+        if (form.config.value.trim()) config = JSON.parse(form.config.value);
+      } catch (err) {
+        showToast('❌ 配置 JSON 格式错误', 'error');
+        return;
+      }
+      const data = {
+        name: form.name.value,
+        description: form.description.value,
+        config: config,
+        is_enabled: form.is_enabled.checked
+      };
+      const result = await updateAPI('/policies', data, 'POST');
+      if (result) {
+        closeModal('create-modal');
+        showToast('✅ 策略已创建');
+        loadPolicyData();
+      } else {
+        showToast('❌ 创建失败', 'error');
+      }
+    }
+
+    function openEditModal(id) {
+      const policy = allPolicies.find(p => p.id === id);
+      if (!policy) return;
+      document.getElementById('edit-id').value = policy.id;
+      document.getElementById('edit-name').value = policy.name || '';
+      document.getElementById('edit-description').value = policy.description || '';
+      let configStr = '';
+      if (policy.config) {
+        if (typeof policy.config === 'string') {
+          try { configStr = JSON.stringify(JSON.parse(policy.config), null, 2); } catch (e) { configStr = policy.config; }
+        } else {
+          configStr = JSON.stringify(policy.config, null, 2);
+        }
+      }
+      document.getElementById('edit-config').value = configStr;
+      document.getElementById('edit-enabled').checked = !!policy.is_enabled;
+      openModal('edit-modal');
+    }
+
+    async function submitEdit(e) {
+      e.preventDefault();
+      const form = e.target;
+      const id = form.id.value;
+      let config = {};
+      try {
+        if (form.config.value.trim()) config = JSON.parse(form.config.value);
+      } catch (err) {
+        showToast('❌ 配置 JSON 格式错误', 'error');
+        return;
+      }
+      const data = {
+        name: form.name.value,
+        description: form.description.value,
+        config: config,
+        is_enabled: form.is_enabled.checked
+      };
+      const result = await updateAPI(`/policies/${id}`, data, 'PUT');
+      if (result) {
+        closeModal('edit-modal');
+        showToast('✅ 策略已更新');
+        loadPolicyData();
+      } else {
+        showToast('❌ 更新失败', 'error');
+      }
+    }
+
+    async function deletePolicy(id) {
+      if (!confirm('⚠️ 确定删除该策略？此操作不可撤销。')) return;
+      try {
+        const response = await fetch(`${API_BASE}/policies/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+          showToast('✅ 策略已删除');
+          loadPolicyData();
+        } else {
+          showToast('❌ 删除失败', 'error');
+        }
+      } catch (e) {
+        showToast('❌ 删除失败', 'error');
+      }
+    }
+
+    // ==================== 分页 ====================
+    function renderPagination() {
+      const total = filteredPolicies.length;
+      const totalPg = Math.max(1, Math.ceil(total / pageSize));
+      if (currentPage > totalPg) currentPage = totalPg;
+
+      document.getElementById('total-records').textContent = total;
+      document.getElementById('current-page-num').textContent = currentPage;
+      document.getElementById('total-pages').textContent = totalPg;
+      document.getElementById('btn-prev').disabled = currentPage <= 1;
+      document.getElementById('btn-next').disabled = currentPage >= totalPg;
+
+      const container = document.getElementById('page-numbers');
+      const pages = generatePageNumbers(currentPage, totalPg);
+      container.innerHTML = pages.map(p => {
+        if (p === '...') return '<span class="page-btn ellipsis">…</span>';
+        return `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="goToPage(${p})">${p}</button>`;
+      }).join('');
+    }
+
+    function generatePageNumbers(current, total) {
+      if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+      const pages = [];
+      if (current <= 4) { for (let i = 1; i <= 5; i++) pages.push(i); pages.push('...', total); }
+      else if (current >= total - 3) { pages.push(1, '...'); for (let i = total - 4; i <= total; i++) pages.push(i); }
+      else { pages.push(1, '...', current - 1, current, current + 1, '...', total); }
+      return pages;
+    }
+
+    function goPage(dir) {
+      if (dir === 'prev' && currentPage > 1) currentPage--;
+      else if (dir === 'next') currentPage++;
+      renderTable(); renderPagination();
+    }
+    function goToPage(n) { currentPage = n; renderTable(); renderPagination(); }
+    function changePageSize() { pageSize = parseInt(document.getElementById('page-size').value); currentPage = 1; renderTable(); renderPagination(); }
+
+    // ==================== 辅助 ====================
+    function escHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+    function closeModalOnOverlay(e, id) { if (e.target === e.currentTarget) closeModal(id); }
+
+    function showToast(msg, type = 'success') {
+      const existing = document.querySelector('.toast');
+      if (existing) existing.remove();
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.style.cssText = `position:fixed;top:1.5rem;right:1.5rem;z-index:2000;padding:0.875rem 1.5rem;border-radius:10px;background:${type === 'error' ? 'rgba(239,68,68,0.95)' : 'rgba(16,185,129,0.95)'};color:#fff;font-weight:600;font-size:0.9rem;box-shadow:0 8px 24px rgba(0,0,0,0.3);animation:toastIn 0.3s ease-out;`;
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 3000);
+    }
+
+    // ==================== 管控执行 ====================
+    async function executeBlock() {
+      const ip = document.getElementById('block-ip').value.trim();
+      const port = document.getElementById('block-port').value;
+      if (!ip) { showToast('❌ 请输入目标 IP', 'error'); return; }
+      
+      const resultDiv = document.getElementById('block-result');
+      try {
+        const resp = await fetch(`${API_BASE}/enforcement/block?ip=${ip}&port=${port}`, { method: 'POST' });
+        const data = await resp.json();
+        resultDiv.style.display = 'block';
+        resultDiv.style.background = 'rgba(239,68,68,0.15)';
+        resultDiv.style.border = '1px solid rgba(239,68,68,0.3)';
+        resultDiv.innerHTML = `🚫 <strong>${ip}:${port}</strong> 已阻断 (${data.method || 'auto'})`;
+        showToast(`🚫 ${ip}:${port} 已阻断`);
+      } catch (e) {
+        showToast('❌ 阻断失败', 'error');
+      }
+    }
+
+    async function executeUnblock() {
+      const ip = document.getElementById('block-ip').value.trim();
+      const port = document.getElementById('block-port').value;
+      if (!ip) { showToast('❌ 请输入目标 IP', 'error'); return; }
+      
+      const resultDiv = document.getElementById('block-result');
+      try {
+        const resp = await fetch(`${API_BASE}/enforcement/unblock?ip=${ip}&port=${port}`, { method: 'POST' });
+        const data = await resp.json();
+        resultDiv.style.display = 'block';
+        resultDiv.style.background = 'rgba(16,185,129,0.15)';
+        resultDiv.style.border = '1px solid rgba(16,185,129,0.3)';
+        resultDiv.innerHTML = `✅ <strong>${ip}:${port}</strong> 已解除阻断`;
+        showToast(`✅ ${ip}:${port} 已解除`);
+      } catch (e) {
+        showToast('❌ 解除失败', 'error');
+      }
+    }
+
+    async function detectProcesses() {
+      const container = document.getElementById('process-list');
+      container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:1rem;">🔍 检测中...</div>';
+      try {
+        const resp = await fetch(`${API_BASE}/process/detect`);
+        const procs = await resp.json();
+        if (procs.length === 0) {
+          container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:1rem;">未检测到 OpenClaw 进程</div>';
+          return;
+        }
+        container.innerHTML = procs.map(p => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--dark-border);">
+            <div>
+              <span style="font-family:monospace;font-weight:600;">PID ${p.pid}</span>
+              <span style="color:var(--text-muted);font-size:0.8rem;margin-left:0.5rem;">${(p.command || '').substring(0, 40)}</span>
+            </div>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <span style="font-size:0.8rem;color:var(--text-muted);">CPU ${p.cpu}% MEM ${p.memory}%</span>
+              <button class="btn btn-danger btn-xs" onclick="killProcess(${p.pid})">终止</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        container.innerHTML = '<div style="text-align:center;color:var(--danger);padding:1rem;">❌ 检测失败</div>';
+      }
+    }
+
+    async function killProcess(pid) {
+      if (!confirm(`⚠️ 确定终止进程 PID ${pid}？`)) return;
+      try {
+        const resp = await fetch(`${API_BASE}/process/kill?pid=${pid}`, { method: 'POST' });
+        const data = await resp.json();
+        showToast(data.success ? `✅ 进程 ${pid} 已终止` : `❌ 终止失败`);
+        detectProcesses();
+      } catch (e) { showToast('❌ 操作失败', 'error'); }
+    }
+
+    const toastStyle = document.createElement('style');
+    toastStyle.textContent = `@keyframes toastIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }`;
+    document.head.appendChild(toastStyle);
+  </script>
+</body>
+</html>

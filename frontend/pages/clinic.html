@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>急救室 - OpenClaw Enterprise</title>
+  <link rel="stylesheet" href="/css/style.css?v=11">
+  <link rel="stylesheet" href="/css/responsive.css?v=11">
+  <style>
+    .check-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--dark-border);
+    }
+    .check-item:last-child { border-bottom: none; }
+    .status-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .status-badge.ok { background: rgba(16,185,129,0.2); color: var(--success); }
+    .status-badge.warning { background: rgba(245,158,11,0.2); color: var(--warning); }
+    .status-badge.error { background: rgba(239,68,68,0.2); color: var(--danger); }
+    .log-viewer {
+      background: #0d1117;
+      border: 1px solid var(--dark-border);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.85rem;
+      color: #e6edf3;
+      max-height: 400px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-brand">
+        <div class="logo-icon">🐱</div>
+        <div class="logo-text">
+          <h1>OpenClaw</h1>
+          <p>Enterprise</p>
+        </div>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">总览</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/dashboard"><span class="nav-icon">📊</span> 控制台</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">资产管理</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/devices"><span class="nav-icon">💻</span> 实例管理</a></li>
+        <li><a href="/pages/agents"><span class="nav-icon">🤖</span> Agent 管理</a></li>
+        <li><a href="/pages/tenants"><span class="nav-icon">🏢</span> 租户管理</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">安全管控</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/policies"><span class="nav-icon">🛡️</span> 安全管控</a></li>
+        <li><a href="/pages/scanner"><span class="nav-icon">🔍</span> 网络扫描</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">监控审计</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/alerts"><span class="nav-icon">🚨</span> 告警中心</a></li>
+        <li><a href="/pages/audit"><span class="nav-icon">📋</span> 审计日志</a></li>
+        <li><a href="/pages/syslog"><span class="nav-icon">📜</span> 日志中心</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">系统工具</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/clinic" class="active"><span class="nav-icon">🏥</span> 急救室</a></li>
+        <li><a href="/pages/notification"><span class="nav-icon">🔔</span> 通知配置</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- 主内容区 -->
+  <main class="main-content">
+    <!-- 顶部栏 -->
+    <div class="topbar">
+      <div class="breadcrumb">
+        <div class="breadcrumb-item"><span>🏠</span><span>首页</span></div>
+        <span class="breadcrumb-separator">/</span>
+        <div class="breadcrumb-item">急救室</div>
+      </div>
+      <div class="topbar-actions">
+        <div class="user-menu">
+          <div class="user-avatar">S</div>
+          <div class="user-info">
+            <span class="user-name">丝可乐</span>
+            <span class="user-role">安全管理员</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 内容区 -->
+    <div class="content">
+      <div class="page-header">
+        <h1 class="page-title">🏥 OpenClaw 急救室</h1>
+        <p class="page-subtitle">自动诊断和修复 OpenClaw 启动问题</p>
+      </div>
+
+      <!-- 状态卡片 -->
+      <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="stat-card">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-gateway">-</div>
+              <div class="stat-label">Gateway 状态</div>
+            </div>
+            <div class="stat-icon">🚪</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-process">-</div>
+              <div class="stat-label">进程状态</div>
+            </div>
+            <div class="stat-icon">⚙️</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-launchd">-</div>
+              <div class="stat-label">Launchd 服务</div>
+            </div>
+            <div class="stat-icon">📋</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value">18789</div>
+              <div class="stat-label">监听端口</div>
+            </div>
+            <div class="stat-icon">🔌</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🔧 快速操作</div>
+        </div>
+        <div class="card-body">
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="runCheck()">🔍 诊断问题</button>
+            <button class="btn btn-danger" onclick="runFix()">🛠️ 一键修复</button>
+            <button class="btn btn-warning" onclick="restartGateway()">🔄 重启 Gateway</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 诊断结果 -->
+      <div class="card" id="check-results-card" style="display: none;">
+        <div class="card-header">
+          <div class="card-title">📋 诊断结果</div>
+          <div class="card-actions">
+            <span id="check-summary" style="color: var(--text-muted); font-size: 0.85rem;"></span>
+          </div>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <div id="check-results"></div>
+        </div>
+      </div>
+
+      <!-- 修复结果 -->
+      <div class="card" id="fix-results-card" style="display: none;">
+        <div class="card-header">
+          <div class="card-title">✅ 修复结果</div>
+          <div class="card-actions">
+            <span id="fix-summary" style="color: var(--text-muted); font-size: 0.85rem;"></span>
+          </div>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <div id="fix-results"></div>
+        </div>
+      </div>
+
+      <!-- 日志查看 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📝 Gateway 日志</div>
+          <div class="card-actions">
+            <button class="btn btn-secondary btn-sm" onclick="loadLogs()">🔄 刷新</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="log-viewer" id="log-viewer">点击刷新加载日志...</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API_BASE = window.location.origin;
+    
+    // 页面加载时初始化
+    window.addEventListener('DOMContentLoaded', () => {
+      loadStatus();
+    });
+    
+    async function loadStatus() {
+      try {
+        const r = await fetch(API_BASE + '/api/clinic/status');
+        const s = await r.json();
+        const gw = document.getElementById('stat-gateway');
+        const pr = document.getElementById('stat-process');
+        const ld = document.getElementById('stat-launchd');
+        
+        gw.textContent = s.gateway_running ? '✅ 运行中' : '❌ 已停止';
+        gw.style.color = s.gateway_running ? 'var(--success)' : 'var(--danger)';
+        pr.textContent = s.process_running ? '✅ 存在' : '❌ 不存在';
+        pr.style.color = s.process_running ? 'var(--success)' : 'var(--danger)';
+        ld.textContent = s.launchd_loaded ? '✅ 已加载' : '❌ 未加载';
+        ld.style.color = s.launchd_loaded ? 'var(--success)' : 'var(--danger)';
+      } catch(e) {
+        console.error('Status error:', e);
+      }
+    }
+    
+    async function runCheck() {
+      const div = document.getElementById('check-results');
+      const card = document.getElementById('check-results-card');
+      card.style.display = 'block';
+      div.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-muted);">🔄 正在诊断...</div>';
+      
+      try {
+        const r = await fetch(API_BASE + '/api/clinic/check');
+        const d = await r.json();
+        
+        document.getElementById('check-summary').textContent = 
+          '共 ' + d.total_checks + ' 项 | ✅ ' + d.ok_count + ' 正常 | ⚠️ ' + d.warning_count + ' 警告 | ❌ ' + d.error_count + ' 错误';
+        
+        let html = '';
+        d.results.forEach(item => {
+          const badge = item.status === 'ok' ? 'ok' : item.status === 'warning' ? 'warning' : 'error';
+          const icon = item.status === 'ok' ? '✅' : item.status === 'warning' ? '⚠️' : '❌';
+          html += '<div class="check-item">';
+          html += '<div><div style="font-weight:600;margin-bottom:0.25rem;">' + item.name + '</div>';
+          html += '<div style="color:var(--text-secondary);font-size:0.85rem;">' + item.message + '</div></div>';
+          html += '<span class="status-badge ' + badge + '">' + icon + ' ' + item.status.toUpperCase() + '</span></div>';
+        });
+        
+        div.innerHTML = html;
+      } catch(e) {
+        div.innerHTML = '<div style="padding:1.5rem;color:var(--danger);">❌ 诊断失败：' + e.message + '</div>';
+      }
+    }
+    
+    async function runFix() {
+      if (!confirm('⚠️ 确定要一键修复吗？\n\n系统会自动备份当前配置，然后尝试修复。')) return;
+      
+      const div = document.getElementById('fix-results');
+      const card = document.getElementById('fix-results-card');
+      card.style.display = 'block';
+      div.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-muted);">🔧 正在修复...</div>';
+      
+      try {
+        const r = await fetch(API_BASE + '/api/clinic/fix', { method: 'POST' });
+        const d = await r.json();
+        
+        document.getElementById('fix-summary').textContent = 
+          '共 ' + d.total_actions + ' 项 | ✅ ' + d.success_count + ' 成功 | ❌ ' + d.error_count + ' 失败' +
+          (d.backup_location ? ' | 💾 备份：' + d.backup_location : '');
+        
+        let html = '';
+        d.results.forEach(item => {
+          const badge = item.status === 'ok' || item.status === 'fixed' ? 'ok' : 'error';
+          const icon = item.status === 'ok' || item.status === 'fixed' ? '✅' : '❌';
+          html += '<div class="check-item">';
+          html += '<div><div style="font-weight:600;">' + item.name + '</div>';
+          html += '<div style="color:var(--text-secondary);font-size:0.85rem;">' + item.message + '</div></div>';
+          html += '<span class="status-badge ' + badge + '">' + icon + ' ' + item.status.toUpperCase() + '</span></div>';
+        });
+        
+        div.innerHTML = html;
+        setTimeout(loadStatus, 2000);
+      } catch(e) {
+        div.innerHTML = '<div style="padding:1.5rem;color:var(--danger);">❌ 修复失败：' + e.message + '</div>';
+      }
+    }
+    
+    async function restartGateway() {
+      if (!confirm('🔄 确定重启 Gateway？\n\n服务会中断几秒钟。')) return;
+      
+      try {
+        const r = await fetch(API_BASE + '/api/clinic/restart', { method: 'POST' });
+        const d = await r.json();
+        alert(d.success ? '✅ ' + d.message : '❌ ' + d.message);
+        setTimeout(loadStatus, 2000);
+      } catch(e) {
+        alert('❌ 重启失败：' + e.message);
+      }
+    }
+    
+    async function loadLogs() {
+      const div = document.getElementById('log-viewer');
+      div.textContent = '加载中...';
+      try {
+        const r = await fetch(API_BASE + '/api/clinic/logs?lines=100');
+        const d = await r.json();
+        div.textContent = d.content || '暂无日志内容';
+      } catch(e) {
+        div.textContent = '加载失败：' + e.message;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>租户管理 - OpenClaw Enterprise</title>
+  <link rel="stylesheet" href="/css/style.css?v=10">
+  <link rel="stylesheet" href="/css/responsive.css?v=10">
+</head>
+<body>
+  <!-- 侧边栏 -->
+    <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-brand">
+        <div class="logo-icon">🐱</div>
+        <div class="logo-text">
+          <h1>OpenClaw</h1>
+          <p>Enterprise</p>
+        </div>
+      </div>
+    </div>
+        <div class="nav-section">
+      <div class="nav-section-title">总览</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/dashboard" ><span class="nav-icon">📊</span> 控制台</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">资产管理</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/devices" ><span class="nav-icon">💻</span> 实例管理</a></li>
+        <li><a href="/pages/agents" ><span class="nav-icon">🤖</span> Agent 管理</a></li>
+        <li><a href="/pages/tenants" class="active"><span class="nav-icon">🏢</span> 租户管理</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">安全管控</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/policies" ><span class="nav-icon">🛡️</span> 安全管控</a></li>
+        <li><a href="/pages/scanner" ><span class="nav-icon">🔍</span> 网络扫描</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">监控审计</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/alerts" ><span class="nav-icon">🚨</span> 告警中心</a></li>
+        <li><a href="/pages/audit" ><span class="nav-icon">📋</span> 审计日志</a></li>
+        <li><a href="/pages/syslog"><span class="nav-icon">📜</span> 日志中心</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">分析报告</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/analytics" ><span class="nav-icon">📊</span> 分析中心</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">系统工具</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/clinic" class="active"><span class="nav-icon">🏥</span> 急救室</a></li>
+        <li><a href="/pages/notification" ><span class="nav-icon">🔔</span> 通知配置</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- 主内容区 -->
+  <main class="main-content">
+    <!-- 顶部栏 -->
+    <div class="topbar">
+      <div class="breadcrumb">
+        <div class="breadcrumb-item"><span>🏠</span><span>首页</span></div>
+        <span class="breadcrumb-separator">/</span>
+        <div class="breadcrumb-item">租户管理</div>
+      </div>
+      
+      <div class="topbar-actions">
+        <div class="search-box" id="search-box">
+          <span style="margin-right: 0.5rem;">🔍</span>
+          <input type="text" id="search-input" placeholder="搜索租户名称、代码..." oninput="handleSearch()">
+        </div>
+        <button class="icon-btn">🔔</button>
+        <div class="user-menu">
+          <div class="user-avatar">S</div>
+          <div class="user-info">
+            <span class="user-name">丝可乐</span>
+            <span class="user-role">安全管理员</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 内容区 -->
+    <div class="content">
+      <div class="page-header">
+        <h1 class="page-title">🏢 租户管理</h1>
+        <p class="page-subtitle">管理企业租户组织，分配资源与权限隔离</p>
+      </div>
+
+      <!-- 统计卡片 -->
+      <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="stat-card">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-total">-</div>
+              <div class="stat-label">总租户数</div>
+            </div>
+            <div class="stat-icon">🏢</div>
+          </div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-active">-</div>
+              <div class="stat-label">活跃租户</div>
+            </div>
+            <div class="stat-icon">✅</div>
+          </div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-header">
+            <div>
+              <div class="stat-value" id="stat-inactive">-</div>
+              <div class="stat-label">停用租户</div>
+            </div>
+            <div class="stat-icon">⏸️</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 租户列表 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 租户列表</div>
+          <div class="card-actions">
+            <button class="btn btn-primary btn-sm" onclick="openCreateModal()">➕ 创建租户</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>名称</th>
+                  <th>代码</th>
+                  <th>描述</th>
+                  <th>状态</th>
+                  <th>创建时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="tenants-table">
+                <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">加载中...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- 分页 -->
+          <div class="pagination-bar" id="pagination-bar">
+            <div class="pagination-info">
+              共 <span id="total-records">0</span> 条记录，第 <span id="current-page-num">1</span>/<span id="total-pages">1</span> 页
+            </div>
+            <div class="pagination-controls">
+              <button class="btn btn-secondary btn-sm" id="btn-prev" onclick="goPage('prev')" disabled>‹ 上一页</button>
+              <div class="pagination-pages" id="page-numbers"></div>
+              <button class="btn btn-secondary btn-sm" id="btn-next" onclick="goPage('next')">下一页 ›</button>
+              <select class="filter-select page-size-select" id="page-size" onchange="changePageSize()">
+                <option value="10">10 条/页</option>
+                <option value="20">20 条/页</option>
+                <option value="50">50 条/页</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 创建租户 Modal -->
+  <div class="modal-overlay" id="create-modal" onclick="closeModalOnOverlay(event, 'create-modal')">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>➕ 创建租户</h3>
+        <button class="modal-close" onclick="closeModal('create-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="create-form" onsubmit="submitCreate(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">租户名称 <span class="required">*</span></label>
+              <input type="text" class="form-input" name="name" placeholder="如：研发部" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">租户代码 <span class="required">*</span></label>
+              <input type="text" class="form-input" name="code" placeholder="如：RD" required style="text-transform:uppercase;">
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:1rem;">
+            <label class="form-label">描述</label>
+            <textarea class="form-input form-textarea" name="description" placeholder="租户描述信息..." rows="3"></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('create-modal')">取消</button>
+            <button type="submit" class="btn btn-primary">创建租户</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑租户 Modal -->
+  <div class="modal-overlay" id="edit-modal" onclick="closeModalOnOverlay(event, 'edit-modal')">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>✏️ 编辑租户</h3>
+        <button class="modal-close" onclick="closeModal('edit-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-form" onsubmit="submitEdit(event)">
+          <input type="hidden" name="id" id="edit-id">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">租户名称 <span class="required">*</span></label>
+              <input type="text" class="form-input" name="name" id="edit-name" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">租户代码 <span class="required">*</span></label>
+              <input type="text" class="form-input" name="code" id="edit-code" required style="text-transform:uppercase;">
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:1rem;">
+            <label class="form-label">描述</label>
+            <textarea class="form-input form-textarea" name="description" id="edit-description" rows="3"></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('edit-modal')">取消</button>
+            <button type="submit" class="btn btn-primary">保存修改</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .filter-select {
+      background: var(--dark-bg); color: var(--text-primary);
+      border: 1px solid var(--dark-border); border-radius: 8px;
+      padding: 0.5rem 0.875rem; font-size: 0.85rem;
+      cursor: pointer; outline: none; transition: border-color 0.2s;
+    }
+    .filter-select:hover, .filter-select:focus { border-color: var(--primary); }
+
+    .pagination-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1rem 1.5rem; border-top: 1px solid var(--dark-border);
+      background: rgba(15, 23, 42, 0.3);
+    }
+    .pagination-info { font-size: 0.85rem; color: var(--text-secondary); }
+    .pagination-controls { display: flex; align-items: center; gap: 0.5rem; }
+    .pagination-pages { display: flex; gap: 0.25rem; }
+    .page-btn {
+      min-width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px; border: 1px solid var(--dark-border);
+      background: var(--dark-bg); color: var(--text-secondary);
+      font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+    }
+    .page-btn:hover { border-color: var(--primary); color: var(--text-primary); }
+    .page-btn.active {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff; border-color: var(--primary);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    }
+    .page-btn.ellipsis { border: none; background: none; cursor: default; color: var(--text-muted); }
+    .page-size-select { margin-left: 0.5rem; }
+
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+      z-index: 1000; justify-content: center; align-items: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--dark-card); border: 1px solid var(--dark-border);
+      border-radius: 16px; width: 90%; max-width: 600px;
+      max-height: 85vh; overflow-y: auto;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+      animation: modalSlideIn 0.25s ease-out;
+    }
+    @keyframes modalSlideIn {
+      from { opacity: 0; transform: translateY(-20px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--dark-border);
+    }
+    .modal-header h3 { font-size: 1.1rem; font-weight: 600; }
+    .modal-close {
+      width: 32px; height: 32px; border-radius: 8px;
+      border: 1px solid var(--dark-border); background: var(--dark-bg);
+      color: var(--text-secondary); font-size: 1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+    }
+    .modal-close:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer {
+      display: flex; justify-content: flex-end; gap: 0.75rem;
+      margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--dark-border);
+    }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.375rem; }
+    .form-label { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); }
+    .form-label .required { color: var(--danger); }
+    .form-input {
+      background: var(--dark-bg); border: 1px solid var(--dark-border);
+      border-radius: 8px; padding: 0.625rem 0.875rem;
+      color: var(--text-primary); font-size: 0.9rem;
+      outline: none; transition: border-color 0.2s; font-family: inherit;
+    }
+    .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15); }
+    .form-input::placeholder { color: var(--text-muted); }
+    .form-textarea { resize: vertical; min-height: 80px; }
+
+    .action-group { display: flex; gap: 0.375rem; flex-wrap: wrap; }
+    .btn-xs { padding: 0.3rem 0.6rem; font-size: 0.75rem; border-radius: 6px; }
+
+    .tenant-code {
+      display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px;
+      background: rgba(99,102,241,0.15); color: var(--primary);
+      font-family: monospace; font-weight: 700; font-size: 0.85rem;
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      .form-grid { grid-template-columns: 1fr; }
+      .pagination-bar { flex-direction: column; gap: 0.75rem; }
+      .card-actions { flex-wrap: wrap; }
+    }
+  </style>
+
+  <script src="/js/auth.js"></script>
+    <script>AUTH.requireAuth();</script>
+    <script src="/js/app.js?v=4"></script>
+  <script>
+    // ==================== 状态 ====================
+    let allTenants = [];
+    let filteredTenants = [];
+    let currentPage = 1;
+    let pageSize = 10;
+
+    // ==================== 初始化 ====================
+    document.addEventListener('DOMContentLoaded', function() {
+      loadTenantData();
+    });
+
+    // ==================== 数据加载 ====================
+    async function loadTenantData() {
+      const result = await fetchAPI('/tenants?page=1&page_size=200');
+      if (!result) {
+        document.getElementById('tenants-table').innerHTML =
+          '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">⚠️ 无法连接服务器</td></tr>';
+        return;
+      }
+      allTenants = Array.isArray(result) ? result : (result.items || []);
+      applyFilters();
+      updateStats();
+    }
+
+    function updateStats() {
+      const total = allTenants.length;
+      const active = allTenants.filter(t => t.status === 'active' || !t.status).length;
+      const inactive = allTenants.filter(t => t.status === 'inactive').length;
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-active').textContent = active;
+      document.getElementById('stat-inactive').textContent = inactive;
+    }
+
+    // ==================== 搜索 ====================
+    function handleSearch() { currentPage = 1; applyFilters(); }
+
+    function applyFilters() {
+      const query = (document.getElementById('search-input').value || '').toLowerCase().trim();
+      filteredTenants = allTenants.filter(t => {
+        return !query ||
+          (t.name || '').toLowerCase().includes(query) ||
+          (t.code || '').toLowerCase().includes(query);
+      });
+      renderTable();
+      renderPagination();
+    }
+
+    // ==================== 渲染表格 ====================
+    function renderTable() {
+      const tbody = document.getElementById('tenants-table');
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+      const pageData = filteredTenants.slice(start, end);
+
+      if (pageData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">暂无匹配租户</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = pageData.map(tenant => {
+        const status = tenant.status === 'inactive'
+          ? '<span class="badge badge-gray">⏸️ 停用</span>'
+          : '<span class="badge badge-green">✅ 活跃</span>';
+        const createdAt = tenant.created_at ? formatTime(tenant.created_at) : '-';
+
+        return `<tr>
+          <td style="color:var(--text-muted);font-family:monospace;font-size:0.8rem;">#${tenant.id}</td>
+          <td><span style="font-weight:600;">🏢 ${escHtml(tenant.name)}</span></td>
+          <td><span class="tenant-code">${escHtml(tenant.code || '-')}</span></td>
+          <td style="color:var(--text-secondary);font-size:0.85rem;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(tenant.description || '')}">${escHtml(tenant.description || '-')}</td>
+          <td>${status}</td>
+          <td style="color:var(--text-muted);font-size:0.85rem;">${createdAt}</td>
+          <td>
+            <div class="action-group">
+              <button class="btn btn-secondary btn-xs" onclick="openEditModal(${tenant.id})">✏️ 编辑</button>
+              <button class="btn btn-danger btn-xs" onclick="deleteTenant(${tenant.id})">🗑️ 删除</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ==================== CRUD ====================
+    function openCreateModal() {
+      document.getElementById('create-form').reset();
+      openModal('create-modal');
+    }
+
+    async function submitCreate(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        name: form.name.value,
+        code: form.code.value.toUpperCase(),
+        description: form.description.value
+      };
+      const result = await updateAPI('/tenants', data, 'POST');
+      if (result) {
+        closeModal('create-modal');
+        showToast('✅ 租户已创建');
+        loadTenantData();
+      } else {
+        showToast('❌ 创建失败', 'error');
+      }
+    }
+
+    function openEditModal(id) {
+      const tenant = allTenants.find(t => t.id === id);
+      if (!tenant) return;
+      document.getElementById('edit-id').value = tenant.id;
+      document.getElementById('edit-name').value = tenant.name || '';
+      document.getElementById('edit-code').value = tenant.code || '';
+      document.getElementById('edit-description').value = tenant.description || '';
+      openModal('edit-modal');
+    }
+
+    async function submitEdit(e) {
+      e.preventDefault();
+      const form = e.target;
+      const id = form.id.value;
+      const data = {
+        name: form.name.value,
+        code: form.code.value.toUpperCase(),
+        description: form.description.value
+      };
+      const result = await updateAPI(`/tenants/${id}`, data, 'PUT');
+      if (result) {
+        closeModal('edit-modal');
+        showToast('✅ 租户已更新');
+        loadTenantData();
+      } else {
+        showToast('❌ 更新失败', 'error');
+      }
+    }
+
+    async function deleteTenant(id) {
+      if (!confirm('⚠️ 确定删除该租户？此操作不可撤销。')) return;
+      try {
+        const response = await fetch(`${API_BASE}/tenants/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+          showToast('✅ 租户已删除');
+          loadTenantData();
+        } else {
+          showToast('❌ 删除失败', 'error');
+        }
+      } catch (e) {
+        showToast('❌ 删除失败', 'error');
+      }
+    }
+
+    // ==================== 分页 ====================
+    function renderPagination() {
+      const total = filteredTenants.length;
+      const totalPg = Math.max(1, Math.ceil(total / pageSize));
+      if (currentPage > totalPg) currentPage = totalPg;
+
+      document.getElementById('total-records').textContent = total;
+      document.getElementById('current-page-num').textContent = currentPage;
+      document.getElementById('total-pages').textContent = totalPg;
+      document.getElementById('btn-prev').disabled = currentPage <= 1;
+      document.getElementById('btn-next').disabled = currentPage >= totalPg;
+
+      const container = document.getElementById('page-numbers');
+      const pages = generatePageNumbers(currentPage, totalPg);
+      container.innerHTML = pages.map(p => {
+        if (p === '...') return '<span class="page-btn ellipsis">…</span>';
+        return `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="goToPage(${p})">${p}</button>`;
+      }).join('');
+    }
+
+    function generatePageNumbers(current, total) {
+      if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+      const pages = [];
+      if (current <= 4) { for (let i = 1; i <= 5; i++) pages.push(i); pages.push('...', total); }
+      else if (current >= total - 3) { pages.push(1, '...'); for (let i = total - 4; i <= total; i++) pages.push(i); }
+      else { pages.push(1, '...', current - 1, current, current + 1, '...', total); }
+      return pages;
+    }
+
+    function goPage(dir) {
+      if (dir === 'prev' && currentPage > 1) currentPage--;
+      else if (dir === 'next') currentPage++;
+      renderTable(); renderPagination();
+    }
+    function goToPage(n) { currentPage = n; renderTable(); renderPagination(); }
+    function changePageSize() { pageSize = parseInt(document.getElementById('page-size').value); currentPage = 1; renderTable(); renderPagination(); }
+
+    // ==================== 辅助 ====================
+    function escHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+    function closeModalOnOverlay(e, id) { if (e.target === e.currentTarget) closeModal(id); }
+
+    function showToast(msg, type = 'success') {
+      const existing = document.querySelector('.toast');
+      if (existing) existing.remove();
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.style.cssText = `position:fixed;top:1.5rem;right:1.5rem;z-index:2000;padding:0.875rem 1.5rem;border-radius:10px;background:${type === 'error' ? 'rgba(239,68,68,0.95)' : 'rgba(16,185,129,0.95)'};color:#fff;font-weight:600;font-size:0.9rem;box-shadow:0 8px 24px rgba(0,0,0,0.3);animation:toastIn 0.3s ease-out;`;
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 3000);
+    }
+
+    const toastStyle = document.createElement('style');
+    toastStyle.textContent = `@keyframes toastIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }`;
+    document.head.appendChild(toastStyle);
+  </script>
+</body>
+</html>

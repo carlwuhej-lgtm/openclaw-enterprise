@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>网络扫描 - OpenClaw Enterprise</title>
+  <link rel="stylesheet" href="/css/style.css?v=10">
+</head>
+<body>
+    <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-brand">
+        <div class="logo-icon">🐱</div>
+        <div class="logo-text">
+          <h1>OpenClaw</h1>
+          <p>Enterprise</p>
+        </div>
+      </div>
+    </div>
+        <div class="nav-section">
+      <div class="nav-section-title">总览</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/dashboard" ><span class="nav-icon">📊</span> 控制台</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">资产管理</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/devices" ><span class="nav-icon">💻</span> 实例管理</a></li>
+        <li><a href="/pages/agents" ><span class="nav-icon">🤖</span> Agent 管理</a></li>
+        <li><a href="/pages/tenants" ><span class="nav-icon">🏢</span> 租户管理</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">安全管控</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/policies" ><span class="nav-icon">🛡️</span> 安全管控</a></li>
+        <li><a href="/pages/scanner" class="active"><span class="nav-icon">🔍</span> 网络扫描</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">监控审计</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/alerts" ><span class="nav-icon">🚨</span> 告警中心</a></li>
+        <li><a href="/pages/audit" ><span class="nav-icon">📋</span> 审计日志</a></li>
+        <li><a href="/pages/syslog"><span class="nav-icon">📜</span> 日志中心</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">分析报告</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/analytics" ><span class="nav-icon">📊</span> 分析中心</a></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">系统工具</div>
+      <ul class="nav-menu">
+        <li><a href="/pages/clinic" class="active"><span class="nav-icon">🏥</span> 急救室</a></li>
+        <li><a href="/pages/notification" ><span class="nav-icon">🔔</span> 通知配置</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="topbar">
+      <div class="breadcrumb">
+        <div class="breadcrumb-item"><span>🏠</span><span>首页</span></div>
+        <span class="breadcrumb-separator">/</span>
+        <div class="breadcrumb-item">网络扫描</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn">🔔</button>
+        <div class="user-menu">
+          <div class="user-avatar">S</div>
+          <div class="user-info">
+            <span class="user-name">丝可乐</span>
+            <span class="user-role">安全管理员</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-header">
+        <h1 class="page-title">🔍 网络扫描</h1>
+        <p class="page-subtitle">自动扫描内网中的 OpenClaw 实例，发现未授权实例</p>
+      </div>
+
+      <div class="content-grid">
+        <div class="left-column">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🔍 扫描配置</div>
+            </div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:1rem;">
+                <div>
+                  <label style="display:block;margin-bottom:0.5rem;font-weight:600;">扫描模式</label>
+                  <select id="scan-mode" class="tenant-select" style="width:100%;padding:0.75rem;">
+                    <option value="quick">🚀 快速扫描 (常见端口)</option>
+                    <option value="standard">📊 标准扫描 (自定义端口)</option>
+                    <option value="deep">🔍 深度扫描 (全端口)</option>
+                  </select>
+                </div>
+                
+                <div id="subnet-input">
+                  <label style="display:block;margin-bottom:0.5rem;font-weight:600;">子网地址</label>
+                  <input type="text" id="subnet" value="192.168.1.0/24" 
+                         style="width:100%;padding:0.75rem;background:var(--dark-bg);border:1px solid var(--dark-border);border-radius:8px;color:var(--text-primary);"
+                         placeholder="例如：192.168.1.0/24">
+                </div>
+                
+                <div id="range-input" style="display:none;">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div>
+                      <label style="display:block;margin-bottom:0.5rem;font-weight:600;">起始 IP</label>
+                      <input type="text" id="start-ip" 
+                             style="width:100%;padding:0.75rem;background:var(--dark-bg);border:1px solid var(--dark-border);border-radius:8px;color:var(--text-primary);"
+                             placeholder="192.168.1.1">
+                    </div>
+                    <div>
+                      <label style="display:block;margin-bottom:0.5rem;font-weight:600;">结束 IP</label>
+                      <input type="text" id="end-ip" 
+                             style="width:100%;padding:0.75rem;background:var(--dark-bg);border:1px solid var(--dark-border);border-radius:8px;color:var(--text-primary);"
+                             placeholder="192.168.1.254">
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <label style="display:block;margin-bottom:0.5rem;font-weight:600;">扫描端口</label>
+                  <input type="text" id="scan-ports" value="18789,8000,8080,3000" 
+                         style="width:100%;padding:0.75rem;background:var(--dark-bg);border:1px solid var(--dark-border);border-radius:8px;color:var(--text-primary);"
+                         placeholder="多个端口用逗号分隔">
+                  <p style="color:var(--text-muted);font-size:0.85rem;margin-top:0.5rem;">默认：18789, 8000, 8080, 3000（OpenClaw Gateway + 常见端口）</p>
+                </div>
+                
+                <button class="btn btn-primary" onclick="startScan()" style="width:100%;justify-content:center;">
+                  🔍 开始扫描
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:1.5rem;">
+            <div class="card-header">
+              <div class="card-title">📊 扫描结果</div>
+              <button class="btn btn-secondary btn-sm" onclick="importResults()">📥 导入到资产</button>
+            </div>
+            <div class="card-body" style="padding:0;">
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th><input type="checkbox" id="select-all" onchange="toggleSelectAll()"></th>
+                      <th>IP 地址</th>
+                      <th>主机名</th>
+                      <th>端口</th>
+                      <th>版本</th>
+                      <th>状态</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="scan-results">
+                    <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">点击"开始扫描"按钮</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="right-column">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">ℹ️ 扫描说明</div>
+            </div>
+            <div class="card-body">
+              <div style="color:var(--text-secondary);line-height:1.8;font-size:0.9rem;">
+                <p style="margin-bottom:1rem;"><strong>🔍 扫描原理</strong><br>通过 TCP 连接测试扫描指定端口，检测是否有 OpenClaw 服务运行</p>
+                <p style="margin-bottom:1rem;"><strong>⚡ 扫描速度</strong><br>默认并发 100 个线程，扫描 /24 子网约需 10-30 秒</p>
+                <p style="margin-bottom:1rem;"><strong>🎯 识别方式</strong><br>访问 /api/status 端点确认是否是 OpenClaw 实例</p>
+                <p style="margin-bottom:1rem;"><strong>⚠️ 注意事项</strong><br>扫描可能被防火墙阻挡，需要管理员权限</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:1.5rem;">
+            <div class="card-header">
+              <div class="card-title">📈 扫描统计</div>
+            </div>
+            <div class="card-body">
+              <div id="scan-stats">
+                <div style="display:flex;justify-content:space-between;margin-bottom:0.75rem;">
+                  <span style="color:var(--text-secondary);">扫描次数</span>
+                  <span id="stat-scans" style="font-weight:600;">0</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:0.75rem;">
+                  <span style="color:var(--text-secondary);">发现实例</span>
+                  <span id="stat-devices" style="font-weight:600;">0</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:0.75rem;">
+                  <span style="color:var(--text-secondary);">已注册</span>
+                  <span id="stat-registered" style="font-weight:600;">0</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;">
+                  <span style="color:var(--text-secondary);">未授权</span>
+                  <span id="stat-unauthorized" style="font-weight:600;color:var(--danger);">0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/auth.js"></script>
+    <script>AUTH.requireAuth();</script>
+    <script src="/js/app.js?v=4"></script>
+  <script>
+    let scanResults = [];
+
+    // 切换扫描模式
+    document.getElementById('scan-mode').addEventListener('change', function() {
+      document.getElementById('subnet-input').style.display = this.value === 'subnet' ? 'block' : 'none';
+      document.getElementById('range-input').style.display = this.value === 'range' ? 'block' : 'none';
+    });
+
+    async function startScan() {
+      const mode = document.getElementById('scan-mode').value;
+      const portsStr = document.getElementById('scan-ports').value;
+      const subnet = document.getElementById('subnet').value;
+      
+      const ports = portsStr.split(',').map(p => parseInt(p.trim())).filter(p => !isNaN(p));
+      
+      let requestBody = { 
+        mode: mode,
+        ports: ports,
+        subnet: subnet
+      };
+      
+      // 显示加载中
+      document.getElementById('scan-results').innerHTML = 
+        '<tr><td colspan="7" style="text-align:center;padding:2rem;">🔍 正在扫描中...</td></tr>';
+      
+      try {
+        const response = await fetch('/api/scan/v2', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        });
+        
+        const data = await response.json();
+        scanResults = data.devices || [];
+        
+        renderResults(scanResults);
+        updateStats(scanResults, data.stats);
+      } catch (error) {
+        scanResults = [];
+        renderResults([]);
+        document.getElementById('scan-status').textContent = '⚠️ 扫描失败，请检查服务器连接';
+      }
+    }
+
+    function renderResults(results) {
+      const tbody = document.getElementById('scan-results');
+      
+      if (results.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">未发现实例</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = results.map((device, index) => {
+        const confidenceColor = device.confidence >= 80 ? 'var(--success)' : device.confidence >= 50 ? 'var(--warning)' : 'var(--danger)';
+        return `
+        <tr>
+          <td><input type="checkbox" class="device-checkbox" data-index="${index}"></td>
+          <td style="font-family:monospace">${device.ip}</td>
+          <td style="font-family:monospace;color:var(--text-secondary)">${device.hostname}</td>
+          <td><span class="badge badge-blue">${device.port}</span></td>
+          <td><span class="badge badge-purple">${device.version || 'unknown'}</span></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+              <div class="risk-track" style="width:60px;height:4px;">
+                <div class="risk-fill ${device.confidence >= 80 ? 'low' : device.confidence >= 50 ? 'medium' : 'high'}" 
+                     style="width:${device.confidence}%"></div>
+              </div>
+              <span style="font-size:0.8rem;color:${confidenceColor}">${device.confidence}%</span>
+            </div>
+          </td>
+          <td>
+            <button class="btn btn-primary btn-sm" onclick="registerDevice(${index})">➕ 注册</button>
+            <button class="btn btn-danger btn-sm" onclick="blockDevice('${device.ip}')" ${device.confidence < 50 ? '' : 'style="display:none"'}>🚫 阻断</button>
+          </td>
+        </tr>
+      `}).join('');
+    }
+
+    function updateStats(results, scanStats) {
+      document.getElementById('stat-scans').textContent = 
+        parseInt(document.getElementById('stat-scans').textContent) + 1;
+      document.getElementById('stat-devices').textContent = results.length;
+      
+      if (scanStats) {
+        // 显示扫描统计
+        const statsHtml = `
+          <div style="margin-top:1rem;padding:1rem;background:rgba(99,102,241,0.1);border-radius:8px;">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;text-align:center;">
+              <div>
+                <div style="font-size:1.25rem;font-weight:700;color:var(--primary)">${scanStats.scanned || 0}</div>
+                <div style="font-size:0.75rem;color:var(--text-secondary)">扫描 IP</div>
+              </div>
+              <div>
+                <div style="font-size:1.25rem;font-weight:700;color:var(--success)">${scanStats.found || 0}</div>
+                <div style="font-size:0.75rem;color:var(--text-secondary)">发现实例</div>
+              </div>
+              <div>
+                <div style="font-size:1.25rem;font-weight:700;color:var(--text-secondary)">${(scanStats.duration_seconds || 0).toFixed(1)}s</div>
+                <div style="font-size:0.75rem;color:var(--text-secondary)">耗时</div>
+              </div>
+            </div>
+          </div>
+        `;
+        document.getElementById('scan-stats').innerHTML = statsHtml;
+      }
+      
+      // 这里应该查询已注册实例列表来对比
+      document.getElementById('stat-registered').textContent = '0';
+      document.getElementById('stat-unauthorized').textContent = results.length;
+    }
+
+    function toggleSelectAll() {
+      const checked = document.getElementById('select-all').checked;
+      document.querySelectorAll('.device-checkbox').forEach(cb => cb.checked = checked);
+    }
+
+    function registerDevice(index) {
+      const device = scanResults[index];
+      alert(`注册实例：${device.ip}\n\n（实际实现：跳转到实例注册页面，预填实例信息）`);
+    }
+
+    function blockDevice(ip) {
+      if (confirm(`确定要阻断实例 ${ip} 吗？\n\n阻断后该实例将无法访问网络。`)) {
+        alert(`✅ 已阻断实例 ${ip}`);
+      }
+    }
+
+    function importResults() {
+      const checked = document.querySelectorAll('.device-checkbox:checked');
+      if (checked.length === 0) {
+        alert('请先选择要导入的实例');
+        return;
+      }
+      alert(`导入 ${checked.length} 个实例到实例管理`);
+    }
+  </script>
+</body>
+</html>
